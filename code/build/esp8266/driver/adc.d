@@ -29,8 +29,6 @@ driver/adc.o: \
  /opt/Espressif/ESP8266_RTOS_SDK/components/heap/include/esp_heap_caps.h \
  /opt/Espressif/ESP8266_RTOS_SDK/components/esp_common/include/esp_err.h \
  /opt/Espressif/ESP8266_RTOS_SDK/components/heap/port/esp8266/include/esp_heap_config.h \
- /opt/Espressif/ESP8266_RTOS_SDK/components/freertos/include/freertos/task.h \
- /opt/Espressif/ESP8266_RTOS_SDK/components/freertos/include/freertos/private/list.h \
  /opt/Espressif/ESP8266_RTOS_SDK/components/freertos/include/freertos/semphr.h \
  /opt/Espressif/ESP8266_RTOS_SDK/components/freertos/include/freertos/queue.h \
  /opt/Espressif/ESP8266_RTOS_SDK/components/log/include/esp_log.h \
@@ -95,10 +93,6 @@ driver/adc.o: \
 /opt/Espressif/ESP8266_RTOS_SDK/components/esp_common/include/esp_err.h:
 
 /opt/Espressif/ESP8266_RTOS_SDK/components/heap/port/esp8266/include/esp_heap_config.h:
-
-/opt/Espressif/ESP8266_RTOS_SDK/components/freertos/include/freertos/task.h:
-
-/opt/Espressif/ESP8266_RTOS_SDK/components/freertos/include/freertos/private/list.h:
 
 /opt/Espressif/ESP8266_RTOS_SDK/components/freertos/include/freertos/semphr.h:
 

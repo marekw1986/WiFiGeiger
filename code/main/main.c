@@ -13,14 +13,25 @@
 #include "esp_system.h"
 #include "esp_spi_flash.h"
 #include "geiger.h"
+#include "ds3231.h"
+
+
+void i2c_task_example(void *arg) {
+	struct tm time;
+ 
+    i2c_master_init();
+
+    while(1) {
+		ds3231_getTime(&time);
+		vTaskDelay(1000 / portTICK_RATE_MS);
+    }
+}
+
 
 void app_main()
 {
     printf("Hello world!\n");
 	geiger_init();
-    
-    //I2C Master init
-    //i2c_master_init();
     
     xTaskCreate(i2c_task_example, "i2c_task_example", 2048, NULL, 10, NULL);
 }

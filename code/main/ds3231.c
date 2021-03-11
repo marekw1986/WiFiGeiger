@@ -9,6 +9,7 @@
 
 #include "driver/i2c.h"
 #include "ds3231.h"
+#include "i2c_master.h"
 
 // convert normal decimal to binary coded decimal
 static uint8_t ICACHE_FLASH_ATTR decToBcd(uint8_t dec) {
@@ -24,33 +25,7 @@ static uint8_t ICACHE_FLASH_ATTR bcdToDec(uint8_t bcd) {
 // returns true to indicate success
 static bool ICACHE_FLASH_ATTR ds3231_send(uint8_t *data, uint8_t len) {
 
-	int loop;
-
-	i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-	// signal i2c start
-	i2c_master_start(cmd);
-
-	// write address & direction
-	i2c_master_write_byte(cmd, (uint8_t)(DS3231_ADDR << 1));
-	if (!i2c_master_checkAck(cmd)) {
-		//uart0_send("i2c error\r\n");
-		i2c_master_stop(cmd);
-		return false;
-	}
-
-	// send the data
-	for (loop = 0; loop < len; loop++) {
-		i2c_master_write_byte(data[loop]);
-		if (!i2c_master_checkAck(cmd)) {
-			//uart0_send("i2c error\r\n");
-			i2c_master_stop(cmd);
-			return false;
-		}
-	}
-
-	// signal i2c stop
-	i2c_master_stop(cmd);
-	i2c_cmd_link_delete(cmd);
+	i2c_master_write_buf(I2C_MASTER_NUM, DS3231_ADDR, 0x00, data, len);
 
 	return true;
 
@@ -60,28 +35,7 @@ static bool ICACHE_FLASH_ATTR ds3231_send(uint8_t *data, uint8_t len) {
 // returns true to indicate success
 static bool ICACHE_FLASH_ATTR ds3231_recv(uint8_t *data, uint8_t len) {
 
-	int loop;
-
-	// signal i2c start
-	i2c_master_start();
-
-	// write address & direction
-	i2c_master_writeByte((uint8_t)((DS3231_ADDR << 1) | 1));
-	if (!i2c_master_checkAck()) {
-		//uart0_send("i2c error\r\n");
-		i2c_master_stop();
-		return false;
-	}
-
-	// read bytes
-	for (loop = 0; loop < len; loop++) {
-		data[loop] = i2c_master_readByte();
-		// send ack (except after last byte, then we send nack)
-		if (loop < (len - 1)) i2c_master_send_ack(); else i2c_master_send_nack();
-	}
-
-	// signal i2c stop
-	i2c_master_stop();
+	i2c_master_read_buf(I2C_MASTER_NUM, DS3231_ADDR, 0x00, data, len);
 
 	return true;
 
@@ -309,8 +263,6 @@ bool ICACHE_FLASH_ATTR ds3231_getTempFloat(float *temp) {
 // get the time from the rtc, populates a supplied tm struct
 // returns true to indicate success
 bool ICACHE_FLASH_ATTR ds3231_getTime(struct tm *time) {
-
-	int loop;
 	uint8_t data[7];
 
 	// start register address

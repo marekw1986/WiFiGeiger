@@ -34,7 +34,8 @@ ds3231.o: /home/marek/Dropbox/Projekty/WiFiGeiger/code/main/ds3231.c \
  /opt/Espressif/ESP8266_RTOS_SDK/components/esp8266/include/esp8266/eagle_soc.h \
  /opt/Espressif/ESP8266_RTOS_SDK/components/esp8266/include/esp8266/gpio_register.h \
  /home/marek/Dropbox/Projekty/WiFiGeiger/code/main/ds3231.h \
- /opt/Espressif/ESP8266_RTOS_SDK/components/newlib/platform_include/time.h
+ /opt/Espressif/ESP8266_RTOS_SDK/components/newlib/platform_include/time.h \
+ /home/marek/Dropbox/Projekty/WiFiGeiger/code/main/i2c_master.h
 
 /opt/Espressif/ESP8266_RTOS_SDK/components/esp8266/include/driver/i2c.h:
 
@@ -107,3 +108,6 @@ ds3231.o: /home/marek/Dropbox/Projekty/WiFiGeiger/code/main/ds3231.c \
 /home/marek/Dropbox/Projekty/WiFiGeiger/code/main/ds3231.h:
 
 /opt/Espressif/ESP8266_RTOS_SDK/components/newlib/platform_include/time.h:
+
+/home/marek/Dropbox/Projekty/WiFiGeiger/code/main/i2c_master.h:
+/home/marek/Dropbox/Projekty/WiFiGeiger/code/main/./ds3231.c:

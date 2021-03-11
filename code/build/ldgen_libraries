@@ -32,6 +32,7 @@
  /home/marek/Dropbox/Projekty/WiFiGeiger/code/build/protobuf-c/libprotobuf-c.a
  /home/marek/Dropbox/Projekty/WiFiGeiger/code/build/protocomm/libprotocomm.a
  /home/marek/Dropbox/Projekty/WiFiGeiger/code/build/pthread/libpthread.a
+ /home/marek/Dropbox/Projekty/WiFiGeiger/code/build/smartconfig_ack/libsmartconfig_ack.a
  /home/marek/Dropbox/Projekty/WiFiGeiger/code/build/spi_flash/libspi_flash.a
  /home/marek/Dropbox/Projekty/WiFiGeiger/code/build/spi_ram/libspi_ram.a
  /home/marek/Dropbox/Projekty/WiFiGeiger/code/build/spiffs/libspiffs.a

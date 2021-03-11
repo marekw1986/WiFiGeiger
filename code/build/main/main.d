@@ -41,7 +41,9 @@ main.o: /home/marek/Dropbox/Projekty/WiFiGeiger/code/main/main.c \
  /opt/Espressif/ESP8266_RTOS_SDK/components/esp8266/include/esp_idf_version.h \
  /opt/Espressif/ESP8266_RTOS_SDK/components/spi_flash/include/esp_spi_flash.h \
  /opt/Espressif/ESP8266_RTOS_SDK/components/spi_flash/include/spi_flash.h \
- /home/marek/Dropbox/Projekty/WiFiGeiger/code/main/geiger.h
+ /home/marek/Dropbox/Projekty/WiFiGeiger/code/main/geiger.h \
+ /home/marek/Dropbox/Projekty/WiFiGeiger/code/main/ds3231.h \
+ /opt/Espressif/ESP8266_RTOS_SDK/components/newlib/platform_include/time.h
 
 /opt/Espressif/ESP8266_RTOS_SDK/components/freertos/include/freertos/FreeRTOS.h:
 
@@ -128,4 +130,8 @@ main.o: /home/marek/Dropbox/Projekty/WiFiGeiger/code/main/main.c \
 /opt/Espressif/ESP8266_RTOS_SDK/components/spi_flash/include/spi_flash.h:
 
 /home/marek/Dropbox/Projekty/WiFiGeiger/code/main/geiger.h:
+
+/home/marek/Dropbox/Projekty/WiFiGeiger/code/main/ds3231.h:
+
+/opt/Espressif/ESP8266_RTOS_SDK/components/newlib/platform_include/time.h:
 /home/marek/Dropbox/Projekty/WiFiGeiger/code/main/./main.c:

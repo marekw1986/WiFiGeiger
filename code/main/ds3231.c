@@ -11,6 +11,16 @@
 #include "ds3231.h"
 #include "i2c_master.h"
 
+
+#define WRITE_BIT                           I2C_MASTER_WRITE /*!< I2C master write */
+#define READ_BIT                            I2C_MASTER_READ  /*!< I2C master read */
+#define ACK_CHECK_EN                        0x1              /*!< I2C master will check ack from slave*/
+#define ACK_CHECK_DIS                       0x0              /*!< I2C master will not check ack from slave */
+#define ACK_VAL                             0x0              /*!< I2C ack value */
+#define NACK_VAL                            0x1              /*!< I2C nack value */
+#define LAST_NACK_VAL                       0x2              /*!< I2C last_nack value */
+
+
 // convert normal decimal to binary coded decimal
 static uint8_t ICACHE_FLASH_ATTR decToBcd(uint8_t dec) {
   return(((dec / 10) * 16) + (dec % 10));
@@ -25,7 +35,15 @@ static uint8_t ICACHE_FLASH_ATTR bcdToDec(uint8_t bcd) {
 // returns true to indicate success
 static bool ICACHE_FLASH_ATTR ds3231_send(uint8_t *data, uint8_t len) {
 
-	i2c_master_write_buf(I2C_MASTER_NUM, DS3231_ADDR, 0x00, data, len);
+	//i2c_master_write_buf(I2C_MASTER_NUM, DS3231_ADDR, 0x00, data, len);
+	
+	i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, DS3231_ADDR << 1 | WRITE_BIT, ACK_CHECK_EN);
+    i2c_master_write(cmd, data, len, ACK_CHECK_EN);
+    i2c_master_stop(cmd);
+    i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, 1000 / portTICK_RATE_MS);
+    i2c_cmd_link_delete(cmd);
 
 	return true;
 
@@ -35,7 +53,32 @@ static bool ICACHE_FLASH_ATTR ds3231_send(uint8_t *data, uint8_t len) {
 // returns true to indicate success
 static bool ICACHE_FLASH_ATTR ds3231_recv(uint8_t *data, uint8_t len) {
 
-	i2c_master_read_buf(I2C_MASTER_NUM, DS3231_ADDR, 0x00, data, len);
+	//i2c_master_read_buf(I2C_MASTER_NUM, DS3231_ADDR, 0x00, data, len);
+
+    int ret;
+    
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, DS3231_ADDR << 1 | WRITE_BIT, ACK_CHECK_EN);
+    i2c_master_stop(cmd);
+    ret = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, 1000 / portTICK_RATE_MS);
+    i2c_cmd_link_delete(cmd);
+
+    if (ret != ESP_OK) {
+        return false;
+    }
+
+    cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, DS3231_ADDR << 1 | READ_BIT, ACK_CHECK_EN);
+    i2c_master_read(cmd, data, len, LAST_NACK_VAL);
+    i2c_master_stop(cmd);
+    ret = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, 1000 / portTICK_RATE_MS);
+    i2c_cmd_link_delete(cmd);
+    
+    if (ret != ESP_OK) {
+        return false;
+    }    
 
 	return true;
 

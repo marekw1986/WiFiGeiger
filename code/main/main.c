@@ -11,15 +11,22 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
+#include "esp_log.h"
 #include "driver/gpio.h"
 #include "i2c_master.h"
 #include "esp_system.h"
 #include "esp_spi_flash.h"
+#include "esp_wifi.h"
 #include "geiger.h"
 #include "ds3231.h"
+#include "wifi.h"
+#include "http_server.h"
+#include "lwip/apps/sntp.h"
 
 #define GPIO_INPUT_RTC		14
 #define GPIO_INPUT_PIN_SEL 	((1ULL<<GPIO_INPUT_RTC) | (1ULL<<GPIO_INPUT_CPM))
+
+const char *TAG = "wiFiGeiger";
 
 SemaphoreHandle_t xSemaphore = NULL;
 
@@ -37,21 +44,28 @@ void gpio_isr_rtc_handler (void *arg) {
 
 
 void i2c_task_example(void *arg) {
-	struct tm time;
+	time_t now;
+	struct tm timeinfo;
     
-    time.tm_year = 121;
-    time.tm_mon = 2;
-    time.tm_mday = 18;
-    time.tm_hour = 14;
-    time.tm_min = 10;
-    time.tm_hour = 0;
+    timeinfo.tm_year = 121;
+    timeinfo.tm_mon = 2;
+    timeinfo.tm_mday = 18;
+    timeinfo.tm_sec = 0;
+    timeinfo.tm_hour = 14;
+    timeinfo.tm_min = 10;
     
-    ds3231_setTime(&time);
+    ds3231_setTime(&timeinfo);
 
     while(1) {
 		xSemaphoreTake( xSemaphore, portMAX_DELAY );
-		//ds3231_getTime(&time);
-		printf("Time: %lu, CPM: %d\r\n", (long unsigned int)uptime, geiger_get_cpm());
+		//if (ds3231_getTime(&timeinfo)) {
+		//	printf(asctime(&timeinfo));
+		//}
+		//else {printf("Time read FAILURE\r\n");}
+		time(&now);
+		localtime_r(&now, &timeinfo);	
+		printf("Sivert: %f, CPM: %d\r\n", cpm2sievert(geiger_get_cpm()), geiger_get_cpm());
+		printf(asctime(&timeinfo));
 		//vTaskDelay(1000 / portTICK_RATE_MS);
 		
     }
@@ -87,8 +101,20 @@ void app_main() {
     
     printf("Hello world!\n");
 	geiger_init();
+	  
+	wifi_init_sta();
+	esp_wifi_set_ps(WIFI_PS_NONE);
+	
+	sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    sntp_setservername(0, "pool.ntp.org");
+    sntp_init();
     
-    xTaskCreate(i2c_task_example, "i2c_task_example", 2048, NULL, 10, NULL);
+    setenv("TZ", "GMT-1GMT-2,M3.5.0/2,M10.5.0/3", 1);
+    tzset(); 
+    
+    http_server_init(); 
+    
+    xTaskCreate(i2c_task_example, "i2c_task_example", 4096, NULL, 10, NULL);
 }
 
 

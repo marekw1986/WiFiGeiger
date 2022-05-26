@@ -21,6 +21,7 @@
 #include "ds3231.h"
 #include "wifi.h"
 #include "http_server.h"
+#include "mqtt_log.h"
 #include "lwip/apps/sntp.h"
 
 #define GPIO_INPUT_RTC		14
@@ -112,7 +113,8 @@ void app_main() {
     setenv("TZ", "GMT-1GMT-2,M3.5.0/2,M10.5.0/3", 1);
     tzset(); 
     
-    http_server_init(); 
+    http_server_init();
+    mqtt_client_start(); 
     
     xTaskCreate(i2c_task_example, "i2c_task_example", 4096, NULL, 10, NULL);
 }

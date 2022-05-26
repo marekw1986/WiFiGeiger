@@ -11,6 +11,8 @@
 
 extern const char *TAG;
 
+char* constructJSON(void);
+
 /* An HTTP GET handler */
 esp_err_t hello_get_handler(httpd_req_t *req)
 {
@@ -89,26 +91,16 @@ esp_err_t hello_get_handler(httpd_req_t *req)
 
 esp_err_t json_get_handler(httpd_req_t *req)
 {
-    cJSON *root;
-    char *out;
-    
-    root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "Radiation", cpm2sievert(geiger_get_cpm()));
-    cJSON_AddNumberToObject(root, "Time", time(NULL));
-    cJSON_AddStringToObject(root, "Prognosis", "We all gonna die!");
-    out = cJSON_Print(root);
-    cJSON_Delete(root);
-	
-    httpd_resp_send(req, out, strlen(out));
-    free((void *)out);
+    char *data;
+    data = constructJSON();
+    httpd_resp_send(req, data, strlen(data));
+    free(data);
 
     /* After sending the HTTP response the old HTTP request
      * headers are lost. Check if HTTP request headers can be read now. */
     if (httpd_req_get_hdr_value_len(req, "Host") == 0) {
         ESP_LOGI(TAG, "Request headers lost");
     }
-    
-    
     
     return ESP_OK;
 }

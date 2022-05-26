@@ -19,6 +19,8 @@
 
 #include "esp_log.h"
 
+#include "cJSON.h"
+
 #include "mqtt_client.h"
 #include "mqtt_log.h"
 #include "geiger.h"
@@ -37,7 +39,8 @@ os_timer_t mqtt_timer;
 
 void mqtt_timer_func (void* arg);
 
-char* constructJSON (char* buf, uint16_t len) {
+/*
+char* constructJSON(char* buf, uint16_t len) {
 	struct tm time;
     long unsigned int timestamp = 0;
     
@@ -47,19 +50,37 @@ char* constructJSON (char* buf, uint16_t len) {
     snprintf(buf, len, "{\"id\":\"wifigeiger1\",\"geiger\":{\"timestamp\":%lu,\"radiation\":%.4f}}", timestamp, cpm2sievert(geiger_get_cpm()));
     return buf;
 }
+*/
+
+char* constructJSON(void) {
+	cJSON *root;
+	cJSON *geiger;
+	char *out;
+	
+	root = cJSON_CreateObject();
+	cJSON_AddStringToObject(root, "id", "ethergeiger1");
+	cJSON_AddItemToObject(root, "geiger", geiger = cJSON_CreateObject());
+	cJSON_AddNumberToObject(geiger, "timestamp", time(NULL));
+	cJSON_AddNumberToObject(geiger, "radiation", cpm2sievert(geiger_get_cpm()));
+	out = cJSON_Print(root);
+	cJSON_Delete(root);
+	
+	return out;
+}
 
 
 static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
 {
     esp_mqtt_client_handle_t client = event->client;
     int msg_id;
-    char buff[256];
+    char *data;
     // your_context_t *context = event->context;
     switch (event->event_id) {
         case MQTT_EVENT_CONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-            constructJSON(buff, sizeof(buff)-2);
-            msg_id = esp_mqtt_client_publish(client, "testTopic", buff, 0, 1, 0);
+            data = constructJSON();
+            msg_id = esp_mqtt_client_publish(client, "testTopic", data, 0, 1, 0);
+            free(data);
             ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
             break;
         case MQTT_EVENT_DISCONNECTED:
@@ -111,9 +132,10 @@ void mqtt_client_start(void) {
 }
 
 void mqtt_timer_func (void* arg) {
-	char buff[256];
+	char *data;
 	
-	constructJSON(buff, sizeof(buff)-2);
-	esp_mqtt_client_publish(client, "testTopic", buff, 0, 1, 0);
+	data = constructJSON();
+	esp_mqtt_client_publish(client, "testTopic", data, 0, 1, 0);
+	free(data);
 }
 

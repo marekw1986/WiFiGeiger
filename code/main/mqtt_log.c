@@ -27,6 +27,12 @@
 
 extern const char *TAG;
 
+esp_mqtt_client_config_t mqtt_cfg = {
+	.uri = "mqtt://192.168.1.105:1883",
+};
+
+esp_mqtt_client_handle_t client;
+
 os_timer_t mqtt_timer;
 
 void mqtt_timer_func (void* arg);
@@ -70,7 +76,8 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             break;
         case MQTT_EVENT_PUBLISHED:
             ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
-            os_timer_setfn(&mqtt_timer, mqtt_timer_func, (void*)event);
+            os_timer_disarm(&mqtt_timer);
+            os_timer_setfn(&mqtt_timer, mqtt_timer_func, NULL);
             os_timer_arm(&mqtt_timer, 30000, 0);
             break;
         case MQTT_EVENT_DATA:
@@ -80,6 +87,9 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             break;
         case MQTT_EVENT_ERROR:
             ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
+			os_timer_disarm(&mqtt_timer);
+            os_timer_setfn(&mqtt_timer, mqtt_timer_func, NULL);
+            os_timer_arm(&mqtt_timer, 30000, 0);
             break;
         default:
             ESP_LOGI(TAG, "Other event id:%d", event->event_id);
@@ -95,18 +105,12 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 
 void mqtt_client_start(void) {
-    esp_mqtt_client_config_t mqtt_cfg = {
-        .uri = "mqtt://192.168.1.105:1883",
-    };
-
-    esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
+	client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, client);
     esp_mqtt_client_start(client);
 }
 
 void mqtt_timer_func (void* arg) {
-	esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)arg;
-	esp_mqtt_client_handle_t client = event->client;
 	char buff[256];
 	
 	constructJSON(buff, sizeof(buff)-2);

@@ -14,7 +14,7 @@
 #define PRESCALER 			0.0057
 
 volatile uint16_t geiger_pulses[60];
-uint8_t geiger_pulses_index = 0;
+volatile uint8_t geiger_pulses_index = 0;
 volatile uint16_t pulses = 0;
 
 static void geiger_isr_cpm_handler (void *arg);
@@ -29,7 +29,7 @@ void geiger_init (void) {
     }
 
     //interrupt of rising edge
-    io_conf.intr_type = GPIO_INTR_NEGEDGE;
+    io_conf.intr_type = GPIO_INTR_POSEDGE;
     //bit mask of the pins
     io_conf.pin_bit_mask = (1ULL<<GPIO_INPUT_CPM);
     //set as input mode

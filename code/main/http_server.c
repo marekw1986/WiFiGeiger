@@ -11,7 +11,8 @@
 
 extern const char *TAG;
 
-char* constructJSON(void);
+extern char* constructJSON(void);
+extern uint32_t get_uptime(void);
 
 /* An HTTP GET handler */
 esp_err_t hello_get_handler(httpd_req_t *req)
@@ -105,6 +106,27 @@ esp_err_t json_get_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
+esp_err_t sysinfo_get_handler(httpd_req_t *req)
+{
+    char *data;
+    cJSON *root;
+	
+	root = cJSON_CreateObject();
+	cJSON_AddNumberToObject(root, "uptime", get_uptime());
+	data = cJSON_Print(root);
+	cJSON_Delete(root);
+    httpd_resp_send(req, data, strlen(data));
+    free(data);
+
+    /* After sending the HTTP response the old HTTP request
+     * headers are lost. Check if HTTP request headers can be read now. */
+    if (httpd_req_get_hdr_value_len(req, "Host") == 0) {
+        ESP_LOGI(TAG, "Request headers lost");
+    }
+    
+    return ESP_OK;
+}
+
 
 httpd_uri_t hello = {
     .uri       = "/hello",
@@ -125,6 +147,14 @@ httpd_uri_t data_json = {
      .user_ctx = NULL
 };
 
+httpd_uri_t sysinfo_json = {
+    .uri        = "/sysinfo.json",
+    .method     = HTTP_GET,
+    .handler    = sysinfo_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = NULL
+};
 
 httpd_handle_t start_webserver(void)
 {
@@ -138,6 +168,7 @@ httpd_handle_t start_webserver(void)
         ESP_LOGI(TAG, "Registering URI handlers");
         httpd_register_uri_handler(server, &hello);
         httpd_register_uri_handler(server, &data_json);
+        httpd_register_uri_handler(server, &sysinfo_json);
 
         return server;
     }

@@ -34,6 +34,9 @@ SemaphoreHandle_t xSemaphore = NULL;
 
 uint32_t uptime = 0;
 
+uint32_t get_uptime(void) {
+    return uptime;
+}
 
 void gpio_isr_rtc_handler (void *arg) {
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;

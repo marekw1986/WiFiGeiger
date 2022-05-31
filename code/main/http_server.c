@@ -88,7 +88,7 @@ esp_err_t hello_get_handler(httpd_req_t *req)
 }
 
 
-esp_err_t json_get_handler(httpd_req_t *req)
+esp_err_t data_json_get_handler(httpd_req_t *req)
 {
     char *data;
     data = constructJSON();
@@ -139,7 +139,7 @@ httpd_uri_t hello = {
 httpd_uri_t data_json = {
     .uri       = "/data.json",
     .method    = HTTP_GET,
-    .handler   = json_get_handler,
+    .handler   = data_json_get_handler,
     /* Let's pass response string in user
      * context to demonstrate it's usage */
      .user_ctx = NULL

@@ -64,9 +64,11 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
         case MQTT_EVENT_CONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
             data = constructJSON();
-            msg_id = esp_mqtt_client_publish(client, "testTopic", data, 0, 1, 0);
-            free(data);
-            ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+            if (data) {
+                msg_id = esp_mqtt_client_publish(client, "testTopic", data, 0, 1, 0);
+                free(data);
+                ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+            }
             break;
         case MQTT_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
@@ -120,7 +122,9 @@ void mqtt_timer_func (void* arg) {
 	char *data;
 	
 	data = constructJSON();
-	esp_mqtt_client_publish(client, "testTopic", data, 0, 1, 0);
-	free(data);
+    if (data) {
+        esp_mqtt_client_publish(client, "testTopic", data, 0, 1, 0);
+        free(data);
+    }
 }
 

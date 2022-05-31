@@ -44,12 +44,14 @@ char* constructJSON(void) {
 	char *out;
 	
 	root = cJSON_CreateObject();
+    if (root == NULL) return NULL;
 	cJSON_AddStringToObject(root, "id", "ethergeiger1");
 	cJSON_AddItemToObject(root, "geiger", geiger = cJSON_CreateObject());
 	cJSON_AddNumberToObject(geiger, "timestamp", time(NULL));
 	cJSON_AddNumberToObject(geiger, "radiation", cpm2sievert(geiger_get_cpm()));
 	out = cJSON_Print(root);
 	cJSON_Delete(root);
+    if (out == NULL) return NULL;
 	
 	return out;
 }

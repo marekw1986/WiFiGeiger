@@ -125,6 +125,7 @@ void app_main() {
     
     http_server_init();
     mqtt_client_start(); 
+    spi_filesystem_init();
     
     xTaskCreate(i2c_task_example, "i2c_task_example", 4096, NULL, 10, NULL);
 }

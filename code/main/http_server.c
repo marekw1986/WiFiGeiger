@@ -6,13 +6,11 @@
 #include "esp_netif.h"
 #include "esp_event.h"
 #include "http_server.h"
+#include "common.h"
 #include "cJSON.h"
 #include "geiger.h"
 
 extern const char *TAG;
-
-extern char* constructJSON(void);
-extern uint32_t get_uptime(void);
 
 /* An HTTP GET handler */
 esp_err_t hello_get_handler(httpd_req_t *req)

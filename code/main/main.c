@@ -18,6 +18,7 @@
 #include "esp_system.h"
 #include "esp_spi_flash.h"
 #include "esp_wifi.h"
+#include "common.h"
 #include "geiger.h"
 #include "ds3231.h"
 #include "wifi.h"
@@ -32,16 +33,10 @@ const char *TAG = "wiFiGeiger";
 
 SemaphoreHandle_t xSemaphore = NULL;
 
-uint32_t uptime = 0;
-
-uint32_t get_uptime(void) {
-    return uptime;
-}
-
 void gpio_isr_rtc_handler (void *arg) {
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	
-	uptime++;
+	increment_uptime();
 	geiger_1s_handle();
 	xSemaphoreGiveFromISR( xSemaphore, &xHigherPriorityTaskWoken );
 	portYIELD_FROM_ISR();

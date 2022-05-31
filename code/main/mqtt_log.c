@@ -21,6 +21,7 @@
 
 #include "cJSON.h"
 
+#include "common.h"
 #include "mqtt_client.h"
 #include "mqtt_log.h"
 #include "geiger.h"
@@ -51,22 +52,6 @@ char* constructJSON(char* buf, uint16_t len) {
     return buf;
 }
 */
-
-char* constructJSON(void) {
-	cJSON *root;
-	cJSON *geiger;
-	char *out;
-	
-	root = cJSON_CreateObject();
-	cJSON_AddStringToObject(root, "id", "ethergeiger1");
-	cJSON_AddItemToObject(root, "geiger", geiger = cJSON_CreateObject());
-	cJSON_AddNumberToObject(geiger, "timestamp", time(NULL));
-	cJSON_AddNumberToObject(geiger, "radiation", cpm2sievert(geiger_get_cpm()));
-	out = cJSON_Print(root);
-	cJSON_Delete(root);
-	
-	return out;
-}
 
 
 static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)

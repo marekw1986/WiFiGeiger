@@ -88,4 +88,5 @@ void spi_filesystem_init(void) {
     } else {
         ESP_LOGI(TAG, "Partition size: total: %d, used: %d", total, used);
     }
+      
 }

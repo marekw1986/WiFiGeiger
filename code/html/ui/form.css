@@ -1,0 +1,29 @@
+input, select {
+	margin-top: 5px;
+	margin-bottom: 5px;
+	display: inline-block;
+	zoom: 1;
+	vertical-align: middle;
+	margin-left: 20px;
+}
+
+label {
+	display:inline-block;
+	zoom: 1;
+	float: left;
+	padding-top: 5px;
+	width: 200px;
+	text-align: right;
+	font-weight: bold;
+}
+
+.glowing-border {
+	border: 2px solid #dadada;
+	border-radius: 7px
+}
+
+.glowing-border:focus {
+	outline: none;
+	border-color: #9ecaed;
+	box-shadow: 0 0 10px #9ecaed
+}

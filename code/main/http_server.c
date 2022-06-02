@@ -95,16 +95,47 @@ esp_err_t data_json_get_handler(httpd_req_t *req)
     if (data) {
         httpd_resp_send(req, data, strlen(data));
         free(data);
-    }
-
-    /* After sending the HTTP response the old HTTP request
-     * headers are lost. Check if HTTP request headers can be read now. */
-    if (httpd_req_get_hdr_value_len(req, "Host") == 0) {
-        ESP_LOGI(TAG, "Request headers lost");
+        
+        /* After sending the HTTP response the old HTTP request
+		* headers are lost. Check if HTTP request headers can be read now. */
+		if (httpd_req_get_hdr_value_len(req, "Host") == 0) {
+			ESP_LOGI(TAG, "Request headers lost");
+		}
     }
     
     return ESP_OK;
 }
+
+
+esp_err_t file_get_handler(httpd_req_t *req)
+{
+	ESP_LOGI(TAG, "Reading file");
+	FILE* f = fopen((const char*) req->user_ctx, "r");
+	if (f) {
+		fseek(f, 0, SEEK_END);
+		size_t file_size = ftell(f);
+		fseek(f, 0, SEEK_SET);
+		char* data = (char*)malloc(file_size);
+		if (data) {
+			uint32_t bytes_read = fread(data, 1, file_size, f);
+			httpd_resp_send(req, data, bytes_read);
+			free(data);
+		}
+		fclose(f);
+		/* After sending the HTTP response the old HTTP request
+		* headers are lost. Check if HTTP request headers can be read now. */
+		if (httpd_req_get_hdr_value_len(req, "Host") == 0) {
+			ESP_LOGI(TAG, "Request headers lost");
+		}
+	}
+	else {
+		ESP_LOGE(TAG, "Failed to open file for reading");
+		return ESP_FAIL;
+	}
+    
+    return ESP_OK;
+}
+
 
 esp_err_t sysinfo_get_handler(httpd_req_t *req)
 {
@@ -156,10 +187,92 @@ httpd_uri_t sysinfo_json = {
      .user_ctx  = NULL
 };
 
+httpd_uri_t config_html_get = {
+    .uri        = "/ui/config.html",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/ui/config.html"
+};
+
+httpd_uri_t form_css_get = {
+    .uri        = "/ui/form.css",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/ui/form.css"
+};
+
+httpd_uri_t index_html_get = {
+    .uri        = "/ui/index.html",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/ui/index.html"
+};
+
+httpd_uri_t menu_css_get = {
+    .uri        = "/ui/menu.css",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/ui/menu.css"
+};
+
+httpd_uri_t menu_js_get = {
+    .uri        = "/ui/menu.js",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/ui/menu.js"
+};
+
+httpd_uri_t pass_html_get = {
+    .uri        = "/ui/pass.html",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/ui/pass.html"
+};
+
+httpd_uri_t redirect_html_get = {
+    .uri        = "/ui/redirect.html",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/ui/redirect.html"
+};
+
+httpd_uri_t status_html_get = {
+    .uri        = "/ui/status.html",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/ui/status.html"
+};
+
+httpd_uri_t style_css_get = {
+    .uri        = "/ui/style.css",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/ui/style.css"
+};
+
 httpd_handle_t start_webserver(void)
 {
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.max_uri_handlers = 20;
 
     // Start the httpd server
     ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
@@ -169,6 +282,15 @@ httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &hello);
         httpd_register_uri_handler(server, &data_json);
         httpd_register_uri_handler(server, &sysinfo_json);
+        httpd_register_uri_handler(server, &config_html_get);
+        httpd_register_uri_handler(server, &form_css_get);
+        httpd_register_uri_handler(server, &index_html_get);
+        httpd_register_uri_handler(server, &menu_css_get);
+        httpd_register_uri_handler(server, &menu_js_get);
+        httpd_register_uri_handler(server, &pass_html_get);
+        httpd_register_uri_handler(server, &redirect_html_get);
+        httpd_register_uri_handler(server, &status_html_get);
+        httpd_register_uri_handler(server, &style_css_get);
 
         return server;
     }

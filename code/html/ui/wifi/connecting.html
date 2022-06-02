@@ -1,0 +1,49 @@
+<html>
+<head>
+<meta charset="UTF-8">	
+<title>Connecting...</title>
+<link rel="stylesheet" type="text/css" href="wifi.css">
+<link rel="stylesheet" type="text/css" href="/ui/style.css">
+<link rel="stylesheet" type="text/css" href="/ui/menu.css">
+<script type="text/javascript" src="140medley.min.js"></script>
+<script type="text/javascript">
+
+var xhr=j();
+
+
+function getStatus() {
+	xhr.open("GET", "connstatus.cgi");
+	xhr.onreadystatechange=function() {
+		if (xhr.readyState==4 && xhr.status>=200 && xhr.status<300) {
+			var data=JSON.parse(xhr.responseText);
+			if (data.status=="idle") {
+				$("#status").innerHTML="Przygotowywanie połączenia...";
+				window.setTimeout(getStatus, 1000);
+			} else if (data.status=="success") {
+				$("#status").innerHTML="Połączono! Przydzielony numer IP: "+data.ip+". Jeśli jesteś podłączony do tej samej sieci, możesz uzyskać dostęp do urządzenia klikając <a href=\"http://"+data.ip+"/\">tutaj</a>.";
+			} else if (data.status=="working") {
+				$("#status").innerHTML="Łączenie z access pointem...";
+				window.setTimeout(getStatus, 1000);
+			} else if (data.status=="fail") {
+				$("#status").innerHTML="Nieudana próba połączenia. Sprawdź hasło i wybrany acces point.<br /><a href=\"wifi.tpl\">cofnij</a>";
+			}
+		}
+	}
+	xhr.send();
+}
+
+window.onload=function(e) {
+	getStatus();
+};
+</script>
+</head>
+<body>
+<script src="/ui/menu.js"></script>
+<div id="main">
+<h2>Łączenie z access pointem...</h2>
+<p>Status:<br />
+<div id="status">...</div>
+</p>
+</div>
+</body>
+</html>

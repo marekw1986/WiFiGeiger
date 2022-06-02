@@ -74,6 +74,7 @@ void i2c_task_example(void *arg) {
 
 void app_main() {
 	
+	/*
 	uart_config_t uart_config = {
         .baud_rate = 115200,
         .data_bits = UART_DATA_8_BITS,
@@ -84,6 +85,7 @@ void app_main() {
     
     uart_driver_install(UART_NUM_0, 2048, 0, 0, NULL, 0);
 	uart_param_config(UART_NUM_0, &uart_config);
+	*/
 
     gpio_config_t io_conf;
     

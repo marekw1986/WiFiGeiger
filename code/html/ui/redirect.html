@@ -1,0 +1,42 @@
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Redirecting...</title>
+<link rel="stylesheet" type="text/css" href="/ui/style.css">
+<link rel="stylesheet" type="text/css" href="/ui/menu.css">
+<script type="text/javascript">
+function reset() {
+	var main = document.getElementById("main");
+	var xmlhttp;
+	try {
+	   xmlhttp = new XMLHttpRequest();
+	}
+	catch (e) {
+	   try {
+		  xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");	
+	   }
+	   catch (e) {
+			try {
+				xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+			}
+			catch (e){
+				main.style.color = "red";
+				main.innerHTML = "<p>Wystąpił błąd przeglądarki, uniemożliwiający wykonanie zdalnego resetu urządzenia.</p>";
+				return false;
+			}	
+		}
+	}	
+	xmlhttp.open("GET", "http://%ip%/ui/reset.cgi", true);
+	xmlhttp.send();
+	main.innerHTML="<p>Wykonuję reset urządzenia.</p>";
+	setTimeout(function(){main.innerHTML+="<p>Przekierowuję na: http://%ip%</p>";window.location.replace("http://%ip%/?_=" + (new Date()).getTime());}, 6000);
+	return true;	
+}
+</script>
+</head>
+<body onload="setTimeout(reset, 500);">
+<script src="/ui/menu.js"></script>
+<div id="main">
+
+</div>
+</body></html>

@@ -109,18 +109,17 @@ esp_err_t data_json_get_handler(httpd_req_t *req)
 
 esp_err_t file_get_handler(httpd_req_t *req)
 {
+	char data[512];
+	
 	ESP_LOGI(TAG, "Reading file");
 	FILE* f = fopen((const char*) req->user_ctx, "r");
 	if (f) {
-		fseek(f, 0, SEEK_END);
-		size_t file_size = ftell(f);
-		fseek(f, 0, SEEK_SET);
-		char* data = (char*)malloc(file_size);
-		if (data) {
-			uint32_t bytes_read = fread(data, 1, file_size, f);
-			httpd_resp_send(req, data, bytes_read);
-			free(data);
-		}
+		uint32_t bytes_read;
+		do {
+			bytes_read = fread(data, 1, sizeof(data), f);
+			httpd_resp_send_chunk(req, data, bytes_read);
+		} while (bytes_read == sizeof(data));
+		httpd_resp_send_chunk(req, NULL, 0);
 		fclose(f);
 		/* After sending the HTTP response the old HTTP request
 		* headers are lost. Check if HTTP request headers can be read now. */
@@ -144,6 +143,9 @@ esp_err_t sysinfo_get_handler(httpd_req_t *req)
 	
 	root = cJSON_CreateObject();
 	cJSON_AddNumberToObject(root, "uptime", get_uptime());
+	time_t now = time(NULL);
+	cJSON_AddStringToObject(root, "time", asctime(localtime(&now)));
+	cJSON_AddStringToObject(root, "sdk", esp_get_idf_version());
 	data = cJSON_Print(root);
 	cJSON_Delete(root);
     httpd_resp_send(req, data, strlen(data));
@@ -268,6 +270,15 @@ httpd_uri_t style_css_get = {
      .user_ctx  = "/spiffs/ui/style.css"
 };
 
+httpd_uri_t wifi_get = {
+    .uri        = "/ui/wifi",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/ui/wifi/wifi.html"
+};
+
 httpd_handle_t start_webserver(void)
 {
     httpd_handle_t server = NULL;
@@ -291,6 +302,7 @@ httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &redirect_html_get);
         httpd_register_uri_handler(server, &status_html_get);
         httpd_register_uri_handler(server, &style_css_get);
+        httpd_register_uri_handler(server, &wifi_get);
 
         return server;
     }

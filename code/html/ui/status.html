@@ -5,6 +5,7 @@
 <link rel="stylesheet" type="text/css" href="/ui/style.css">
 <link rel="stylesheet" type="text/css" href="/ui/menu.css">
 <link rel="stylesheet" type="text/css" href="/ui/form.css">
+<script src="/jquery.min.js"></script>
 <script language="javascript" type="text/javascript">
 function reset(hard) {
 	var result = document.getElementById('result');
@@ -56,9 +57,14 @@ function reset(hard) {
 	http_request.send();
 	return true;
 }
+function update() {
+    $.getJSON('http://192.168.1.60/sysinfo,json', function(data) {
+    console.log(data);
+});
+}
 </script>
 </head>
-<body>
+<body onload="update()">
 <script src="/ui/menu.js"></script>
 <div id="main">
 <h1>Status systemu</h1>

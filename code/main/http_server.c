@@ -279,6 +279,15 @@ httpd_uri_t wifi_get = {
      .user_ctx  = "/spiffs/ui/wifi/wifi.html"
 };
 
+httpd_uri_t jquery_get = {
+    .uri        = "/jquery.min.js",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/jquery.min.js"
+};
+
 httpd_handle_t start_webserver(void)
 {
     httpd_handle_t server = NULL;
@@ -303,6 +312,7 @@ httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &status_html_get);
         httpd_register_uri_handler(server, &style_css_get);
         httpd_register_uri_handler(server, &wifi_get);
+        httpd_register_uri_handler(server, &jquery_get);
 
         return server;
     }

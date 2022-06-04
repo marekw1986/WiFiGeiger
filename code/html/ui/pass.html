@@ -5,6 +5,7 @@
 <link rel="stylesheet" type="text/css" href="/ui/style.css">
 <link rel="stylesheet" type="text/css" href="/ui/menu.css">
 <link rel="stylesheet" type="text/css" href="/ui/form.css">
+<script type="text/javascript" src="/ui/common.js"></script>
 <script type="text/javascript">
 function test() {
 	var token = document.getElementById('token');
@@ -87,13 +88,18 @@ function test() {
 	http_request.send(request);
 	return true;
 }
+
+function init()
+{
+	getConfigToken();
+}
 </script>
 </head>
-<body>
+<body onload="init();">
 <script src="/ui/menu.js"></script>
 <div id="main">
 <h1>Ustawienia dostępu</h1>
-<input type="hidden" name="token" id="token" value="%configToken%">
+<input type="hidden" name="token" id="token" value="">
 <label>Użytkownik:</label><input type="text" name="user" value="admin" disabled><br>
 <label>Stare hasło:</label><input type="password" name="oldpass" id="oldpass" value="" maxlength="32"><br>
 <label>Nowe hasło:</label><input type="password" name="newpass" id="newpass" value="" maxlength="32"><br>

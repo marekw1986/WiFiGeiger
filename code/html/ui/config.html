@@ -5,6 +5,7 @@
 <link rel="stylesheet" type="text/css" href="/ui/style.css">
 <link rel="stylesheet" type="text/css" href="/ui/menu.css">
 <link rel="stylesheet" type="text/css" href="/ui/form.css">
+<script type="text/javascript" src="/ui/common.js"></script>
 <script type="text/javascript">
 function fillTimezones() {
 	var curTZ = document.getElementById('curtz').value;
@@ -177,14 +178,21 @@ function test() {
 	http_request.send(request);
 	return true;	
 }  
+
+function init()
+{
+	fillTimezones();
+	getConfigToken();
+}
+
 </script>
 </head>
-<body onload="fillTimezones();">
+<body onload="init();">
 <script src="/ui/menu.js"></script>
 <div id="main">
 <h1>Konfiguracja</h1>
 
-<input type="hidden" name="token" id="token" value="%configToken%">
+<input type="hidden" name="token" id="token" value="">
 <label>DHCP:</label> 
 <input onClick="hide('dhcpNo', 'ipSettings')" value="yes" type="radio" name="dhcp" id="dhcpYes"%dhcpyes%>wł.
 <input onClick="hide('dhcpNo', 'ipSettings');" value="no" type="radio" name="dhcp" id="dhcpNo"%dhcpno%>wył.<br><br>

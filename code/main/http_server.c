@@ -5,12 +5,15 @@
 #include "esp_log.h"
 #include "esp_netif.h"
 #include "esp_event.h"
+#include "esp_wifi.h"
 #include "http_server.h"
 #include "common.h"
 #include "cJSON.h"
 #include "geiger.h"
 
 extern const char *TAG;
+
+char configToken[10];
 
 /* An HTTP GET handler */
 esp_err_t hello_get_handler(httpd_req_t *req)
@@ -146,6 +149,23 @@ esp_err_t sysinfo_get_handler(httpd_req_t *req)
 	time_t now = time(NULL);
 	cJSON_AddStringToObject(root, "time", asctime(localtime(&now)));
 	cJSON_AddStringToObject(root, "sdk", esp_get_idf_version());
+	esp_chip_info_t chip_info;
+	esp_chip_info(&chip_info);
+	cJSON_AddStringToObject(root, "chip", chip_info.model ? "ESP32" : "ESP8266");
+	cJSON_AddNumberToObject(root, "cores", chip_info.cores);
+	cJSON_AddNumberToObject(root, "revision", chip_info.revision);
+	{
+		uint8_t mac[6];
+		char buff[20];
+		esp_read_mac(mac, 0);	//Read WiFi STA MAC
+		snprintf(buff, sizeof(buff)-1, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx", mac[0],  mac[1], mac[2], mac[3], mac[4], mac[5]);
+		cJSON_AddStringToObject(root, "sta_mac", buff);
+		esp_read_mac(mac, 1);	//Read WiFi AP MAC
+		snprintf(buff, sizeof(buff)-1, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx", mac[0],  mac[1], mac[2], mac[3], mac[4], mac[5]);
+		cJSON_AddStringToObject(root, "ap_mac", buff);
+	}
+	cJSON_AddNumberToObject(root, "free_heap", esp_get_free_heap_size());
+	cJSON_AddNumberToObject(root, "min_free_heap", esp_get_minimum_free_heap_size());
 	data = cJSON_Print(root);
 	cJSON_Delete(root);
     httpd_resp_send(req, data, strlen(data));
@@ -160,6 +180,59 @@ esp_err_t sysinfo_get_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
+esp_err_t wifiinfo_get_handler(httpd_req_t *req) {
+	char *data;
+    cJSON *root;
+	
+	root = cJSON_CreateObject();
+	{
+		char buff[32];
+		wifi_mode_t mode;
+		if (esp_wifi_get_mode(&mode) == ESP_OK) {
+			switch(mode) {
+				case WIFI_MODE_STA:
+				snprintf(buff, sizeof(buff)-1, "STA");
+				break;
+				case WIFI_MODE_AP:
+				snprintf(buff, sizeof(buff)-1, "AP");
+				break;
+				case WIFI_MODE_APSTA:
+				snprintf(buff, sizeof(buff)-1, "AP+STA");
+				break;
+				default:
+				snprintf(buff, sizeof(buff)-1, "undetermined (error)");
+				break;	
+			}
+			cJSON_AddStringToObject(root, "mode", buff);
+		}
+	}
+	data = cJSON_Print(root);
+	cJSON_Delete(root);
+    httpd_resp_send(req, data, strlen(data));
+    free(data);	
+	
+    /* After sending the HTTP response the old HTTP request
+     * headers are lost. Check if HTTP request headers can be read now. */
+    if (httpd_req_get_hdr_value_len(req, "Host") == 0) {
+        ESP_LOGI(TAG, "Request headers lost");
+    }
+	
+	return ESP_OK;
+}
+
+esp_err_t token_get_handler(httpd_req_t *req) {
+	for (uint8_t i=0; i<(sizeof(configToken)-1); i++) configToken[i] = 'a'+(esp_random() % 26);
+	configToken[sizeof(configToken)-1] = '\0';
+    httpd_resp_send(req, configToken, strlen(configToken));
+	
+    /* After sending the HTTP response the old HTTP request
+     * headers are lost. Check if HTTP request headers can be read now. */
+    if (httpd_req_get_hdr_value_len(req, "Host") == 0) {
+        ESP_LOGI(TAG, "Request headers lost");
+    }
+	
+	return ESP_OK;
+}
 
 httpd_uri_t hello = {
     .uri       = "/hello",
@@ -184,6 +257,24 @@ httpd_uri_t sysinfo_json = {
     .uri        = "/sysinfo.json",
     .method     = HTTP_GET,
     .handler    = sysinfo_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = NULL
+};
+
+httpd_uri_t wifiinfo_json = {
+    .uri        = "/wifiinfo.json",
+    .method     = HTTP_GET,
+    .handler    = wifiinfo_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = NULL
+};
+
+httpd_uri_t token_get = {
+    .uri        = "/ui/token",
+    .method     = HTTP_GET,
+    .handler    = token_get_handler,
     /* Let's pass response string in user
      * context to demonstrate it's usage */
      .user_ctx  = NULL
@@ -214,6 +305,15 @@ httpd_uri_t index_html_get = {
     /* Let's pass response string in user
      * context to demonstrate it's usage */
      .user_ctx  = "/spiffs/ui/index.html"
+};
+
+httpd_uri_t common_js_get = {
+    .uri        = "/ui/common.js",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/ui/common.js"
 };
 
 httpd_uri_t menu_css_get = {
@@ -279,13 +379,22 @@ httpd_uri_t wifi_get = {
      .user_ctx  = "/spiffs/ui/wifi/wifi.html"
 };
 
-httpd_uri_t jquery_get = {
-    .uri        = "/jquery.min.js",
+httpd_uri_t wifi_css_get = {
+    .uri        = "/ui/wifi/wifi.css",
     .method     = HTTP_GET,
     .handler    = file_get_handler,
     /* Let's pass response string in user
      * context to demonstrate it's usage */
-     .user_ctx  = "/spiffs/jquery.min.js"
+     .user_ctx  = "/spiffs/ui/wifi/wifi.css"
+};
+
+httpd_uri_t wifi_140medley_get = {
+    .uri        = "/ui/wifi/140medley.js",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/ui/wifi/140medley.js"
 };
 
 httpd_handle_t start_webserver(void)
@@ -302,9 +411,12 @@ httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &hello);
         httpd_register_uri_handler(server, &data_json);
         httpd_register_uri_handler(server, &sysinfo_json);
+        httpd_register_uri_handler(server, &wifiinfo_json);
+        httpd_register_uri_handler(server, &token_get);
         httpd_register_uri_handler(server, &config_html_get);
         httpd_register_uri_handler(server, &form_css_get);
         httpd_register_uri_handler(server, &index_html_get);
+        httpd_register_uri_handler(server, &common_js_get);
         httpd_register_uri_handler(server, &menu_css_get);
         httpd_register_uri_handler(server, &menu_js_get);
         httpd_register_uri_handler(server, &pass_html_get);
@@ -312,7 +424,8 @@ httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &status_html_get);
         httpd_register_uri_handler(server, &style_css_get);
         httpd_register_uri_handler(server, &wifi_get);
-        httpd_register_uri_handler(server, &jquery_get);
+        httpd_register_uri_handler(server, &wifi_css_get);
+        httpd_register_uri_handler(server, &wifi_140medley_get);
 
         return server;
     }

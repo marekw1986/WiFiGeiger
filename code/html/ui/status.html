@@ -5,7 +5,7 @@
 <link rel="stylesheet" type="text/css" href="/ui/style.css">
 <link rel="stylesheet" type="text/css" href="/ui/menu.css">
 <link rel="stylesheet" type="text/css" href="/ui/form.css">
-<script src="/jquery.min.js"></script>
+<script type="text/javascript" src="/ui/common.js"></script>
 <script language="javascript" type="text/javascript">
 function reset(hard) {
 	var result = document.getElementById('result');
@@ -57,24 +57,55 @@ function reset(hard) {
 	http_request.send();
 	return true;
 }
+
 function update() {
-    $.getJSON('http://192.168.1.60/sysinfo,json', function(data) {
-    console.log(data);
-});
+	loadJSON('/sysinfo.json', function(data) {
+		var uptime = document.getElementById('uptime');
+		var time = document.getElementById('time');
+		var sdk = document.getElementById('sdk');
+		var chip = document.getElementById('chip');
+		var cores = document.getElementById('cores');
+		var revision = document.getElementById('revision');
+		var sta_mac = document.getElementById('sta_mac');
+		var ap_mac = document.getElementById('ap_mac');
+		var free_heap = document.getElementById('free_heap');
+		var min_free_heap = document.getElementById('min_free_heap');
+		uptime.value = data.uptime;
+		time.value = data.time;
+		sdk.value = data.sdk;
+		chip.value = data.chip;
+		cores.value = data.cores;
+		revision.value = data.revision;
+		sta_mac.value = data.sta_mac;
+		ap_mac.value = data.ap_mac;
+		free_heap.value = data.free_heap;
+		min_free_heap.value = data.min_free_heap;
+	}, function(xhr) { console.error(xhr); })
+}
+
+function init() {
+	getConfigToken();
+	update();
+	setInterval(update, 10000);
 }
 </script>
 </head>
-<body onload="update()">
+<body onload="init()">
 <script src="/ui/menu.js"></script>
 <div id="main">
 <h1>Status systemu</h1>
 
-<input type="hidden" name="token" id="token" value="%configToken%">
-<label>Uptime:</label><input type="text" value="%uptime%" disabled><br>
-<label>Czas systemowy:</label><input type="text" value="%time%" disabled><br>
-<label>Wersja SDK:</label><input type="text" value="%sdk%" disabled><br>
-<label>Chip ID:</label><input type="text" value="%chipid%" disabled><br>
-<label>Częstotliwość CPU:</label><input type="text" value="%cpufreq%" disabled><br>
+<input type="hidden" name="token" id="token" value="">
+<label>Uptime:</label><input type="text" id="uptime" value="" disabled><br>
+<label>Czas systemowy:</label><input type="text" id="time" value="" disabled><br>
+<label>Wersja SDK:</label><input type="text" id="sdk" value="" disabled><br>
+<label>Model układu:</label><input type="text" id="chip" value="" disabled><br>
+<label>Liczba rdzeni:</label><input type="text" id="cores" value="" disabled><br>
+<label>Rewizja:</label><input type="text" id="revision" value="" disabled><br>
+<label>STA MAC:</label><input type="text" id="sta_mac" value="" disabled><br>
+<label>AP MAC:</label><input type="text" id="ap_mac" value="" disabled><br>
+<label>Free heap:</label><input type="text" id="free_heap" value="" disabled><br>
+<label>Min. free heap:</label><input type="text" id="min_free_heap" value="" disabled><br>
 <label>Restart urządzenia:</label><input type="button" value="Wykonaj" onclick="reset(0);"><br>
 <label>Ustawienia fabryczne:</label><input type="button" value="Przywróć" onclick="reset(1);"><br>
 <div id="result" style="color:red; display:none;"></div>

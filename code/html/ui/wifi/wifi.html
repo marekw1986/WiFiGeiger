@@ -74,6 +74,20 @@ function scanAPs() {
 
 
 window.onload=function(e) {
+	loadJSON("/wifiinfo.json", function(data) {
+		var wifi_mode = document.getElementById('wifi_mode');
+		var wifi_ap_warn = document.getElementById('wifi_ap_warn');
+		wifi_mode.innerHTML = data.mode;
+		if (data.mode === "STA") {
+			wifi_ap_warn.innerHTML = "Kliknij <a href=\"setmode.cgi?mode=3\">tutaj</a> aby przejść do trybu STA+AP.";
+		}
+		else if (data.mode === "AP") {
+			wifi_ap_warn.innerHTML = "<b>Skanowanie nie jest możliwe w tym trybie.</b> Kliknij <a href=\"setmode.cgi?mode=3\">tutaj</a> aby przejść do trybu STA+AP.";
+		}
+		else if (data.mode === "STA+AP") {
+			wifi_ap_warn.innerHTML = "Kliknij <a href=\"setmode.cgi?mode=1\">tutaj</a> aby przejść do trybu STA.";
+		}
+	}, function(xhr) { console.error(xhr); })
 	scanAPs();
 };
 </script>
@@ -82,12 +96,11 @@ window.onload=function(e) {
 <script src="/ui/menu.js"></script>
 <div id="main">
 <h1>Ustawienia WiFi</h1>
-<p>
-Obecny tryb pracy: %WiFiMode%
-</p>
-<p>
-%WiFiapwarn%
-</p>
+
+Obecny tryb pracy:&nbsp;
+<div style="display: inline-block;" id="wifi_mode"></div><br>
+<div style="display: inline-block;" id="wifi_ap_warn"></div>
+
 <form name="wifiform" action="connect.cgi" method="post">
 <p>
 Wybierz jedną z dostępnych sieci...<br>

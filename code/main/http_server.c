@@ -121,6 +121,36 @@ esp_err_t setmode_cgi_get_handler(httpd_req_t *req)
 }
 
 
+esp_err_t config_cgi_post_handler(httpd_req_t *req)
+{
+    char*  buf;
+    size_t buf_len;
+    char* resp_str = "";
+
+    /* Read URL query string length and allocate memory for length + 1,
+     * extra byte for null termination */
+    buf_len = (req->content_len) + 1;
+    if (buf_len > 1) {
+        buf = malloc(buf_len);
+        if (buf) {
+			int ret = httpd_req_recv(req, buf, buf_len);
+			if (ret <= 0) {
+				if (ret == HTTPD_SOCK_ERR_TIMEOUT) {httpd_resp_send_408(req);}
+				return ESP_FAIL;
+			}
+			buf[ret] = '\0';
+			ESP_LOGI(TAG, "Found URL query => %s", buf);
+			free(buf);
+		}
+    }
+    /* Send response with custom headers and body set as the
+     * string passed in user context*/
+    httpd_resp_send(req, resp_str, strlen(resp_str));
+
+    return ESP_OK;
+}
+
+
 esp_err_t data_json_get_handler(httpd_req_t *req)
 {
     char *data;
@@ -276,9 +306,17 @@ httpd_uri_t setmode_cgi_get = {
     .handler   = setmode_cgi_get_handler,
     /* Let's pass response string in user
      * context to demonstrate it's usage */
-    .user_ctx  = "/spiffs/ui/setmode.cgi"
+    .user_ctx  = NULL
 };
 
+httpd_uri_t config_cgi_get = {
+    .uri       = "/ui/config.cgi",
+    .method    = HTTP_POST,
+    .handler   = config_cgi_post_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+    .user_ctx  = NULL
+};
 
 httpd_uri_t data_json = {
     .uri       = "/data.json",
@@ -446,7 +484,7 @@ httpd_handle_t start_webserver(void)
 {
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.max_uri_handlers = 20;
+    config.max_uri_handlers = 30;
 
     // Start the httpd server
     ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
@@ -457,6 +495,7 @@ httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &data_json);
         httpd_register_uri_handler(server, &settings_json);
         httpd_register_uri_handler(server, &setmode_cgi_get);
+        httpd_register_uri_handler(server, &config_cgi_get);
         httpd_register_uri_handler(server, &sysinfo_json);
         httpd_register_uri_handler(server, &wifiinfo_json);
         httpd_register_uri_handler(server, &token_get);

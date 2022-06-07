@@ -49,11 +49,11 @@ function test() {
 	var ntp2 = document.getElementById('ntp2');
 	var ntp3 = document.getElementById('ntp3');
 	var timezone = document.getElementById('timezone');	
-	var dlsStatus = document.getElementById('dlsStatus');	
+	var daylight = document.getElementById('daylight');	
 	var token = document.getElementById('token');
 	var inputs = document.getElementsByClassName('ipInput');
 	
-	if (dlsStatus.checked) {var dls="yes";}
+	if (daylight.checked) {var dls="yes";}
 	else {var dls="no"}
 	
 	for(i=0; i<inputs.length; i++) {
@@ -179,8 +179,10 @@ function test() {
 	return true;	
 }
 
-function update() {
+function getConfig() {
 	loadJSON('/ui/settings.json', function(data) {
+		var dhcpYes = document.getElementById('dhcpYes');
+		var dhcpNo = document.getElementById('dhcpNo');
 		var ip = document.getElementById('ip');
 		var netmask = document.getElementById('netmask');
 		var gw = document.getElementById('gw');
@@ -191,6 +193,14 @@ function update() {
 		var ntp3 = document.getElementById('ntp3');
 		var timezone = document.getElementById('timezone');
 		var daylight = document.getElementById('daylight');
+		if (data.dhcp) {
+			dhcpYes.checked = true;
+			hide('dhcpNo', 'ipSettings');
+		}
+		else {
+			dhcpNo.checked = true;
+			hide('dhcpNo', 'ipSettings');
+		}
 		ip.value = data.ip;
 		netmask.value = data.netmask;
 		gw.value = data.gw;
@@ -200,7 +210,7 @@ function update() {
 		ntp2.value = data.ntp2;
 		ntp3.value = data.ntp3;
 		timezone.value = data.timezone;
-		daylight.value = data.daylight;
+		daylight.checked = data.daylight;
 	}, function(xhr) { console.error(xhr); })
 }
 
@@ -220,23 +230,23 @@ function init()
 
 <input type="hidden" name="token" id="token" value="">
 <label>DHCP:</label> 
-<input onClick="hide('dhcpNo', 'ipSettings')" value="yes" type="radio" name="dhcp" id="dhcpYes"%dhcpyes%>wł.
-<input onClick="hide('dhcpNo', 'ipSettings');" value="no" type="radio" name="dhcp" id="dhcpNo"%dhcpno%>wył.<br><br>
+<input onClick="hide('dhcpNo', 'ipSettings')" value="yes" type="radio" name="dhcp" id="dhcpYes">wł.
+<input onClick="hide('dhcpNo', 'ipSettings');" value="no" type="radio" name="dhcp" id="dhcpNo">wył.<br><br>
 
 <div id="ipSettings" style="display: %ipdisp%;">
-<label>Adres IP:</label><input type="text" name="ip" id="ip" class="ipInput" value="%ip%" maxlength="15"><br>
-<label>Maska podsieci:</label><input type="text" name="netmask" id="netmask" class="ipInput" value="%netmask%" maxlength="15"><br>
-<label>Brama domyślna:</label><input type="text" name="gw" id="gw" class="ipInput" value="%gw%" maxlength="15"><br>
-<label>Serwer DNS #1:</label><input type="text" name="dns1" id="dns1" class="ipInput" value="%dns1%" maxlength="15"><br>
-<label>Serwer DNS #2:</label><input type="text" name="dns2" id="dns2" class="ipInput" value="%dns2%" maxlength="15"><br><br>
+<label>Adres IP:</label><input type="text" name="ip" id="ip" class="ipInput" value="" maxlength="15"><br>
+<label>Maska podsieci:</label><input type="text" name="netmask" id="netmask" class="" value="%netmask%" maxlength="15"><br>
+<label>Brama domyślna:</label><input type="text" name="gw" id="gw" class="ipInput" value="" maxlength="15"><br>
+<label>Serwer DNS #1:</label><input type="text" name="dns1" id="dns1" class="ipInput" value="" maxlength="15"><br>
+<label>Serwer DNS #2:</label><input type="text" name="dns2" id="dns2" class="ipInput" value="" maxlength="15"><br><br>
 </div>
 
-<label>Serwer NTP #1:</label><input type="text" name="ntp1" id="ntp1" value="%ntp1%" maxlength="60"><br>
-<label>Serwer NTP #2:</label><input type="text" name="ntp2" id="ntp2" value="%ntp2%" maxlength="60"><br>
-<label>Serwer NTP #3:</label><input type="text" name="ntp3" id="ntp3" value="%ntp3%" maxlength="60"><br>
-<input type="hidden" name="curtz" id="curtz" value="%timezone%">
+<label>Serwer NTP #1:</label><input type="text" name="ntp1" id="ntp1" value="" maxlength="60"><br>
+<label>Serwer NTP #2:</label><input type="text" name="ntp2" id="ntp2" value="" maxlength="60"><br>
+<label>Serwer NTP #3:</label><input type="text" name="ntp3" id="ntp3" value="" maxlength="60"><br>
+<input type="hidden" name="curtz" id="curtz" value="">
 <label>Strefa czasowa:</label><select id="timezone"></select><br>
-<label>Automatyczny czas letni/zimowy:</label><input type="checkbox" name="daylight" %dlsstat%><br><br>
+<label>Automatyczny czas letni/zimowy:</label><input type="checkbox" name="daylight" id="daylight"><br><br>
 
 <input type="button" value="Zapisz" onclick="test()">
 

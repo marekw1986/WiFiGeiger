@@ -62,7 +62,7 @@ char* constructSettingsJSON(void) {
 	
 	root = cJSON_CreateObject();
     if (root == NULL) return NULL;
-	cJSON_AddBoolToObject(root, "dns", 1);
+	cJSON_AddBoolToObject(root, "dhcp", 1);
 	cJSON_AddStringToObject(root, "ip", "192.168.1.42");
 	cJSON_AddStringToObject(root, "netmask", "255.255.255.0");
 	cJSON_AddStringToObject(root, "gw", "192.168.1.1");

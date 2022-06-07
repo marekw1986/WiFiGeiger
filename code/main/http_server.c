@@ -102,18 +102,19 @@ esp_err_t setmode_cgi_get_handler(httpd_req_t *req)
             /* Get value of expected key from query string */
             if (httpd_query_key_value(buf, "mode", param, sizeof(param)) == ESP_OK) {
                 ESP_LOGI(TAG, "Found URL query parameter => mode=%s", param);
+                esp_wifi_set_mode(atoi(param));
+                //esp_restart();
             }
         }
         free(buf);
     }
-
-    /* Set some custom headers */
-    httpd_resp_set_hdr(req, "Custom-Header-1", "Custom-Value-1");
-    httpd_resp_set_hdr(req, "Custom-Header-2", "Custom-Value-2");
-
     /* Send response with custom headers and body set as the
      * string passed in user context*/
-    const char* resp_str = (const char*) req->user_ctx;
+    const char* resp_str = "<html><head>\
+    <script language=\"JavaScript\" type=\"text/javascript\">\
+    function redirect() {location.href=\"/ui/wifi\";}\
+	</script>\
+    </head><body onload=\"redirect()\"></body></html>";
     httpd_resp_send(req, resp_str, strlen(resp_str));
 
     return ESP_OK;

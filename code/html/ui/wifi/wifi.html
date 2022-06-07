@@ -79,12 +79,12 @@ window.onload=function(e) {
 		var wifi_ap_warn = document.getElementById('wifi_ap_warn');
 		wifi_mode.innerHTML = data.mode;
 		if (data.mode === "STA") {
-			wifi_ap_warn.innerHTML = "Kliknij <a href=\"setmode.cgi?mode=3\">tutaj</a> aby przejść do trybu STA+AP.";
+			wifi_ap_warn.innerHTML = "Kliknij <a href=\"setmode.cgi?mode=3\">tutaj</a> aby przejść do trybu AP+STA.";
 		}
 		else if (data.mode === "AP") {
-			wifi_ap_warn.innerHTML = "<b>Skanowanie nie jest możliwe w tym trybie.</b> Kliknij <a href=\"setmode.cgi?mode=3\">tutaj</a> aby przejść do trybu STA+AP.";
+			wifi_ap_warn.innerHTML = "<b>Skanowanie nie jest możliwe w tym trybie.</b> Kliknij <a href=\"setmode.cgi?mode=3\">tutaj</a> aby przejść do trybu AP+STA.";
 		}
-		else if (data.mode === "STA+AP") {
+		else if (data.mode === "AP+STA") {
 			wifi_ap_warn.innerHTML = "Kliknij <a href=\"setmode.cgi?mode=1\">tutaj</a> aby przejść do trybu STA.";
 		}
 	}, function(xhr) { console.error(xhr); })

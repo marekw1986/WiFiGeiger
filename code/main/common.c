@@ -38,7 +38,7 @@ inline void increment_uptime(void) {
     uptime++;
 }
 
-char* constructJSON(void) {
+char* constructDataJSON(void) {
 	cJSON *root;
 	cJSON *geiger;
 	char *out;
@@ -49,6 +49,32 @@ char* constructJSON(void) {
 	cJSON_AddItemToObject(root, "geiger", geiger = cJSON_CreateObject());
 	cJSON_AddNumberToObject(geiger, "timestamp", time(NULL));
 	cJSON_AddNumberToObject(geiger, "radiation", cpm2sievert(geiger_get_cpm()));
+	out = cJSON_Print(root);
+	cJSON_Delete(root);
+    if (out == NULL) return NULL;
+	
+	return out;
+}
+
+char* constructSettingsJSON(void) {
+	cJSON *root;
+	char *out;
+	
+	root = cJSON_CreateObject();
+    if (root == NULL) return NULL;
+	cJSON_AddBoolToObject(root, "dns", 1);
+	cJSON_AddStringToObject(root, "ip", "192.168.1.42");
+	cJSON_AddStringToObject(root, "netmask", "255.255.255.0");
+	cJSON_AddStringToObject(root, "gw", "192.168.1.1");
+	cJSON_AddStringToObject(root, "dns1", "8.8.8.8");
+	cJSON_AddStringToObject(root, "dns2", "8.8.4.4");
+	cJSON_AddStringToObject(root, "ntp1", "adres");
+	cJSON_AddStringToObject(root, "ntp2", "adres");
+	cJSON_AddStringToObject(root, "ntp3", "adres");
+	cJSON_AddStringToObject(root, "mqtt_server", "adres");
+	cJSON_AddStringToObject(root, "mqtt_topic", "adres");
+	cJSON_AddNumberToObject(root, "timezone", 1);
+	cJSON_AddBoolToObject(root, "daylight", 1);
 	out = cJSON_Print(root);
 	cJSON_Delete(root);
     if (out == NULL) return NULL;

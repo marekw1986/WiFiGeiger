@@ -124,13 +124,25 @@ esp_err_t setmode_cgi_get_handler(httpd_req_t *req)
 esp_err_t data_json_get_handler(httpd_req_t *req)
 {
     char *data;
-    data = constructJSON();
+    data = constructDataJSON();
     if (data) {
         httpd_resp_set_type(req, "application/json");
         httpd_resp_send(req, data, strlen(data));
         free(data);
-        
+    }
+    
+    return ESP_OK;
+}
 
+
+esp_err_t settings_json_get_handler(httpd_req_t *req)
+{
+    char *data;
+    data = constructSettingsJSON();
+    if (data) {
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_send(req, data, strlen(data));
+        free(data);
     }
     
     return ESP_OK;
@@ -272,6 +284,15 @@ httpd_uri_t data_json = {
     .uri       = "/data.json",
     .method    = HTTP_GET,
     .handler   = data_json_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx = NULL
+};
+
+httpd_uri_t settings_json = {
+    .uri       = "/ui/settings.json",
+    .method    = HTTP_GET,
+    .handler   = settings_json_get_handler,
     /* Let's pass response string in user
      * context to demonstrate it's usage */
      .user_ctx = NULL
@@ -434,6 +455,7 @@ httpd_handle_t start_webserver(void)
         ESP_LOGI(TAG, "Registering URI handlers");
         httpd_register_uri_handler(server, &hello);
         httpd_register_uri_handler(server, &data_json);
+        httpd_register_uri_handler(server, &settings_json);
         httpd_register_uri_handler(server, &setmode_cgi_get);
         httpd_register_uri_handler(server, &sysinfo_json);
         httpd_register_uri_handler(server, &wifiinfo_json);

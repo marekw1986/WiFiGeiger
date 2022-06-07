@@ -177,12 +177,38 @@ function test() {
 	var request = "token=" + token.value + "&dhcp=" + dhcp + "&ip=" + ip.value + "&netmask=" + netmask.value + "&gw=" + gw.value + "&dns1=" + dns1.value + "&dns2=" + dns2.value + "&ntp1=" + ntp1.value + "&ntp2=" + ntp2.value + "&ntp3=" + ntp3.value + "&timezone=" + timezone.value + "&dls=" + dls;
 	http_request.send(request);
 	return true;	
-}  
+}
+
+function update() {
+	loadJSON('/ui/settings.json', function(data) {
+		var ip = document.getElementById('ip');
+		var netmask = document.getElementById('netmask');
+		var gw = document.getElementById('gw');
+		var dns1 = document.getElementById('dns1');
+		var dns2 = document.getElementById('dns2');
+		var ntp1 = document.getElementById('ntp1');
+		var ntp2 = document.getElementById('ntp2');
+		var ntp3 = document.getElementById('ntp3');
+		var timezone = document.getElementById('timezone');
+		var daylight = document.getElementById('daylight');
+		ip.value = data.ip;
+		netmask.value = data.netmask;
+		gw.value = data.gw;
+		dns1.value = data.dns1;
+		dns2.value = data.dns2;
+		ntp1.value = data.ntp1;
+		ntp2.value = data.ntp2;
+		ntp3.value = data.ntp3;
+		timezone.value = data.timezone;
+		daylight.value = data.daylight;
+	}, function(xhr) { console.error(xhr); })
+}
 
 function init()
 {
 	fillTimezones();
 	getConfigToken();
+    getConfig();
 }
 
 </script>
@@ -210,7 +236,7 @@ function init()
 <label>Serwer NTP #3:</label><input type="text" name="ntp3" id="ntp3" value="%ntp3%" maxlength="60"><br>
 <input type="hidden" name="curtz" id="curtz" value="%timezone%">
 <label>Strefa czasowa:</label><select id="timezone"></select><br>
-<label>Automatyczny czas letni/zimowy:</label><input type="checkbox" name="dlsStatus" %dlsstat%><br><br>
+<label>Automatyczny czas letni/zimowy:</label><input type="checkbox" name="daylight" %dlsstat%><br><br>
 
 <input type="button" value="Zapisz" onclick="test()">
 

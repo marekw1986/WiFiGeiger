@@ -121,6 +121,84 @@ esp_err_t setmode_cgi_get_handler(httpd_req_t *req)
 }
 
 
+esp_err_t reset_cgi_get_handler(httpd_req_t *req)
+{
+    char*  buf;
+    size_t buf_len;
+    char* resp_str = "";
+
+    /* Read URL query string length and allocate memory for length + 1,
+     * extra byte for null termination */
+    buf_len = httpd_req_get_url_query_len(req) + 1;
+    if (buf_len > 1) {
+        buf = malloc(buf_len);
+        if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK) {
+            ESP_LOGI(TAG, "Found URL query => %s", buf);
+            char param[32];
+            /* Get value of expected key from query string */
+            if (httpd_query_key_value(buf, "token", param, sizeof(param)) == ESP_OK) {
+                ESP_LOGI(TAG, "Found URL query parameter => token=%s", param);
+                //esp_restart();
+            }
+        }
+        free(buf);
+    }
+    /* Send response with custom headers and body set as the
+     * string passed in user context*/
+    httpd_resp_send(req, resp_str, strlen(resp_str));
+
+    return ESP_OK;
+}
+
+
+esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
+{
+    char*  buf;
+    size_t buf_len;
+    char* resp_str = "";
+
+    /* Read URL query string length and allocate memory for length + 1,
+     * extra byte for null termination */
+    buf_len = httpd_req_get_url_query_len(req) + 1;
+    if (buf_len > 1) {
+        buf = malloc(buf_len);
+        if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK) {
+            ESP_LOGI(TAG, "Found URL query => %s", buf);
+        }
+        free(buf);
+    }
+    /* Send response with custom headers and body set as the
+     * string passed in user context*/
+    httpd_resp_send(req, resp_str, strlen(resp_str));
+
+    return ESP_OK;
+}
+
+
+esp_err_t connstatus_cgi_get_handler(httpd_req_t *req)
+{
+    char*  buf;
+    size_t buf_len;
+    char* resp_str = "";
+
+    /* Read URL query string length and allocate memory for length + 1,
+     * extra byte for null termination */
+    buf_len = httpd_req_get_url_query_len(req) + 1;
+    if (buf_len > 1) {
+        buf = malloc(buf_len);
+        if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK) {
+            ESP_LOGI(TAG, "Found URL query => %s", buf);
+        }
+        free(buf);
+    }
+    /* Send response with custom headers and body set as the
+     * string passed in user context*/
+    httpd_resp_send(req, resp_str, strlen(resp_str));
+
+    return ESP_OK;
+}
+
+
 esp_err_t config_cgi_post_handler(httpd_req_t *req)
 {
     char*  buf;
@@ -139,7 +217,67 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
 				return ESP_FAIL;
 			}
 			buf[ret] = '\0';
-			ESP_LOGI(TAG, "Found URL query => %s", buf);
+			ESP_LOGI(TAG, "Found POST data => %s", buf);
+			free(buf);
+		}
+    }
+    /* Send response with custom headers and body set as the
+     * string passed in user context*/
+    httpd_resp_send(req, resp_str, strlen(resp_str));
+
+    return ESP_OK;
+}
+
+
+esp_err_t connect_cgi_post_handler(httpd_req_t *req)
+{
+    char*  buf;
+    size_t buf_len;
+    char* resp_str = "";
+
+    /* Read URL query string length and allocate memory for length + 1,
+     * extra byte for null termination */
+    buf_len = (req->content_len) + 1;
+    if (buf_len > 1) {
+        buf = malloc(buf_len);
+        if (buf) {
+			int ret = httpd_req_recv(req, buf, buf_len);
+			if (ret <= 0) {
+				if (ret == HTTPD_SOCK_ERR_TIMEOUT) {httpd_resp_send_408(req);}
+				return ESP_FAIL;
+			}
+			buf[ret] = '\0';
+			ESP_LOGI(TAG, "Found POST data => %s", buf);
+			free(buf);
+		}
+    }
+    /* Send response with custom headers and body set as the
+     * string passed in user context*/
+    httpd_resp_send(req, resp_str, strlen(resp_str));
+
+    return ESP_OK;
+}
+
+
+esp_err_t pass_cgi_post_handler(httpd_req_t *req)
+{
+    char*  buf;
+    size_t buf_len;
+    char* resp_str = "";
+
+    /* Read URL query string length and allocate memory for length + 1,
+     * extra byte for null termination */
+    buf_len = (req->content_len) + 1;
+    if (buf_len > 1) {
+        buf = malloc(buf_len);
+        if (buf) {
+			int ret = httpd_req_recv(req, buf, buf_len);
+			if (ret <= 0) {
+				if (ret == HTTPD_SOCK_ERR_TIMEOUT) {httpd_resp_send_408(req);}
+				return ESP_FAIL;
+			}
+			buf[ret] = '\0';
+			ESP_LOGI(TAG, "Found POST data => %s", buf);
 			free(buf);
 		}
     }
@@ -191,6 +329,9 @@ esp_err_t file_get_handler(httpd_req_t *req)
 		}
 		else if (strcmp(ext, "json") == 0) {
 			httpd_resp_set_type(req, "application/json");
+		}
+		else if (strcmp(ext, "png") == 0) {
+			httpd_resp_set_type(req, "image/png");
 		}
 	}
 	FILE* f = fopen((const char*) req->user_ctx, "r");
@@ -309,10 +450,55 @@ httpd_uri_t setmode_cgi_get = {
     .user_ctx  = NULL
 };
 
-httpd_uri_t config_cgi_get = {
+httpd_uri_t reset_cgi_get = {
+    .uri       = "/ui/reset.cgi",
+    .method    = HTTP_GET,
+    .handler   = reset_cgi_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+    .user_ctx  = NULL
+};
+
+httpd_uri_t wifiscan_cgi_get = {
+    .uri       = "/ui/wifiscan.cgi",
+    .method    = HTTP_GET,
+    .handler   = wifiscan_cgi_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+    .user_ctx  = NULL
+};
+
+httpd_uri_t connstatus_cgi_get = {
+    .uri       = "/ui/wifi/connstatus.cgi",
+    .method    = HTTP_GET,
+    .handler   = connstatus_cgi_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+    .user_ctx  = NULL
+};
+
+httpd_uri_t config_cgi_post = {
     .uri       = "/ui/config.cgi",
     .method    = HTTP_POST,
     .handler   = config_cgi_post_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+    .user_ctx  = NULL
+};
+
+httpd_uri_t pass_cgi_post = {
+    .uri       = "/ui/pass.cgi",
+    .method    = HTTP_POST,
+    .handler   = pass_cgi_post_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+    .user_ctx  = NULL
+};
+
+httpd_uri_t connect_cgi_post = {
+    .uri       = "/ui/connect.cgi",
+    .method    = HTTP_POST,
+    .handler   = connect_cgi_post_handler,
     /* Let's pass response string in user
      * context to demonstrate it's usage */
     .user_ctx  = NULL
@@ -462,6 +648,24 @@ httpd_uri_t wifi_get = {
      .user_ctx  = "/spiffs/ui/wifi/wifi.html"
 };
 
+httpd_uri_t connecting_html_get = {
+    .uri        = "/ui/wifi/connecting.html",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/ui/wifi/connecting.html"
+};
+
+httpd_uri_t icons_png_get = {
+    .uri        = "/ui/wifi/icons.png",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/ui/wifi/icons.png"
+};
+
 httpd_uri_t wifi_css_get = {
     .uri        = "/ui/wifi/wifi.css",
     .method     = HTTP_GET,
@@ -495,7 +699,12 @@ httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &data_json);
         httpd_register_uri_handler(server, &settings_json);
         httpd_register_uri_handler(server, &setmode_cgi_get);
-        httpd_register_uri_handler(server, &config_cgi_get);
+        httpd_register_uri_handler(server, &reset_cgi_get);
+        httpd_register_uri_handler(server, &wifiscan_cgi_get);
+        httpd_register_uri_handler(server, &connstatus_cgi_get);
+        httpd_register_uri_handler(server, &config_cgi_post);
+        httpd_register_uri_handler(server, &connect_cgi_post);
+        httpd_register_uri_handler(server, &pass_cgi_post);
         httpd_register_uri_handler(server, &sysinfo_json);
         httpd_register_uri_handler(server, &wifiinfo_json);
         httpd_register_uri_handler(server, &token_get);
@@ -510,6 +719,8 @@ httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &status_html_get);
         httpd_register_uri_handler(server, &style_css_get);
         httpd_register_uri_handler(server, &wifi_get);
+        httpd_register_uri_handler(server, &connecting_html_get);
+        httpd_register_uri_handler(server, &icons_png_get);
         httpd_register_uri_handler(server, &wifi_css_get);
         httpd_register_uri_handler(server, &wifi_140medley_get);
 

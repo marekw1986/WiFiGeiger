@@ -71,8 +71,8 @@ char* constructSettingsJSON(void) {
 	cJSON_AddStringToObject(root, "ntp1", "adres");
 	cJSON_AddStringToObject(root, "ntp2", "adres");
 	cJSON_AddStringToObject(root, "ntp3", "adres");
-	cJSON_AddStringToObject(root, "mqtt_server", "adres");
-	cJSON_AddStringToObject(root, "mqtt_topic", "adres");
+	cJSON_AddStringToObject(root, "mqtt_server", "192.168.1.95");
+	cJSON_AddStringToObject(root, "mqtt_topic", "testTopic");
 	cJSON_AddNumberToObject(root, "timezone", 1);
 	cJSON_AddBoolToObject(root, "daylight", 1);
 	out = cJSON_Print(root);

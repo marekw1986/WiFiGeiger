@@ -191,6 +191,8 @@ function getConfig() {
 		var ntp1 = document.getElementById('ntp1');
 		var ntp2 = document.getElementById('ntp2');
 		var ntp3 = document.getElementById('ntp3');
+		var mqtt_server = document.getElementById('mqtt_server');
+		var mqtt_topic = document.getElementById('mqtt_topic');
 		var timezone = document.getElementById('timezone');
 		var daylight = document.getElementById('daylight');
 		if (data.dhcp) {
@@ -209,6 +211,8 @@ function getConfig() {
 		ntp1.value = data.ntp1;
 		ntp2.value = data.ntp2;
 		ntp3.value = data.ntp3;
+		mqtt_server.value = data.mqtt_server;
+		mqtt_topic.value = data.mqtt_topic;
 		timezone.value = data.timezone;
 		daylight.checked = data.daylight;
 	}, function(xhr) { console.error(xhr); })
@@ -243,7 +247,11 @@ function init()
 
 <label>Serwer NTP #1:</label><input type="text" name="ntp1" id="ntp1" value="" maxlength="60"><br>
 <label>Serwer NTP #2:</label><input type="text" name="ntp2" id="ntp2" value="" maxlength="60"><br>
-<label>Serwer NTP #3:</label><input type="text" name="ntp3" id="ntp3" value="" maxlength="60"><br>
+<label>Serwer NTP #3:</label><input type="text" name="ntp3" id="ntp3" value="" maxlength="60"><br><br>
+
+<label>Serwer MQTT:</label><input type="text" name="mqtt_addr" id="mqtt_server" value="" maxlength="60"><br>
+<label>Temat MQTT:</label><input type="text" name="mqtt_topic" id="mqtt_topic" value="" maxlength="60"><br>
+
 <input type="hidden" name="curtz" id="curtz" value="">
 <label>Strefa czasowa:</label><select id="timezone"></select><br>
 <label>Automatyczny czas letni/zimowy:</label><input type="checkbox" name="daylight" id="daylight"><br><br>

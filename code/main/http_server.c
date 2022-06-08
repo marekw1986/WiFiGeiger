@@ -113,7 +113,6 @@ esp_err_t setmode_cgi_get_handler(httpd_req_t *req)
                 if (httpd_query_key_value(buf, "mode", param, sizeof(param)) == ESP_OK) {
                     ESP_LOGI(TAG, "Found URL query parameter => mode=%s", param);
                     esp_wifi_set_mode(atoi(param));
-                    //esp_restart();
                 }
             }
             free(buf);
@@ -163,7 +162,7 @@ esp_err_t reset_cgi_get_handler(httpd_req_t *req)
 							}
 						}
 						resp_str = "ok";
-						//Set reset timer here
+						set_reset_timer();
 					}
                 }
             }
@@ -719,6 +718,7 @@ httpd_handle_t start_webserver(void)
 {
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.lru_purge_enable = true;
     config.max_uri_handlers = 30;
 
     // Start the httpd server

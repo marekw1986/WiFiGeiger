@@ -28,8 +28,10 @@
 #include "config.h"
 
 extern const char *TAG;
-
+os_timer_t reset_timer;
 uint32_t uptime = 0;
+
+static void restart_timer_func(void* param);
 
 uint32_t get_uptime(void) {
     return uptime;
@@ -122,4 +124,16 @@ void spi_filesystem_init(void) {
         ESP_LOGI(TAG, "Partition size: total: %d, used: %d", total, used);
     }
       
+}
+
+
+static void restart_timer_func(void* param) {
+	esp_restart();
+}
+
+
+void set_reset_timer (void) {
+	os_timer_disarm(&reset_timer);
+	os_timer_setfn(&reset_timer, restart_timer_func, NULL);
+	os_timer_arm(&reset_timer, 1000, 0);	
 }

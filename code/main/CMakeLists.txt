@@ -5,6 +5,7 @@ set(COMPONENT_SRCS "main.c")
 set(COMPONENT_SRCS "common.c")
 set(COMPONENT_SRCS "geiger.c")
 set(COMPONENT_SRCS "i2c_master.c")
+set(COMPONENT_SRCS "config.c")
 #set(COMPONENT_SRCS "ds3231.c")
 
 register_component()

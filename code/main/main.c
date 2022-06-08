@@ -25,6 +25,7 @@
 #include "http_server.h"
 #include "mqtt_log.h"
 #include "lwip/apps/sntp.h"
+#include "config.h"
 
 #define GPIO_INPUT_RTC		14
 #define GPIO_INPUT_PIN_SEL 	((1ULL<<GPIO_INPUT_RTC) | (1ULL<<GPIO_INPUT_CPM))
@@ -74,18 +75,20 @@ void i2c_task_example(void *arg) {
 
 void app_main() {
 	
-	/*
-	uart_config_t uart_config = {
-        .baud_rate = 115200,
-        .data_bits = UART_DATA_8_BITS,
-        .parity    = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
-    };
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        // NVS partition was truncated and needs to be erased
+        // Retry nvs_flash_init
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        err = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK( err );
+    //config_load_defaults();
+    //err = config_save_settings_to_flash();
+    //if (err != ESP_OK) printf("Error (%s) saving settings to NVS!\n", esp_err_to_name(err));
     
-    uart_driver_install(UART_NUM_0, 2048, 0, 0, NULL, 0);
-	uart_param_config(UART_NUM_0, &uart_config);
-	*/
+    err = config_load_settings_from_flash();
+    if (err != ESP_OK) printf("Error (%s) reading settings from NVS!\n", esp_err_to_name(err));
 
     gpio_config_t io_conf;
     

@@ -25,6 +25,7 @@
 #include "cJSON.h"
 #include "common.h"
 #include "geiger.h"
+#include "config.h"
 
 extern const char *TAG;
 
@@ -68,9 +69,9 @@ char* constructSettingsJSON(void) {
 	cJSON_AddStringToObject(root, "gw", "192.168.1.1");
 	cJSON_AddStringToObject(root, "dns1", "8.8.8.8");
 	cJSON_AddStringToObject(root, "dns2", "8.8.4.4");
-	cJSON_AddStringToObject(root, "ntp1", "adres");
-	cJSON_AddStringToObject(root, "ntp2", "adres");
-	cJSON_AddStringToObject(root, "ntp3", "adres");
+	cJSON_AddStringToObject(root, "ntp1", config.ntp1);
+	cJSON_AddStringToObject(root, "ntp2", config.ntp2);
+	cJSON_AddStringToObject(root, "ntp3", config.ntp3);
 	cJSON_AddStringToObject(root, "mqtt_server", "192.168.1.95");
 	cJSON_AddStringToObject(root, "mqtt_topic", "testTopic");
 	cJSON_AddNumberToObject(root, "timezone", 1);

@@ -60,22 +60,28 @@ char* constructDataJSON(void) {
 char* constructSettingsJSON(void) {
 	cJSON *root;
 	char *out;
+	char buff[32];
 	
 	root = cJSON_CreateObject();
     if (root == NULL) return NULL;
-	cJSON_AddBoolToObject(root, "dhcp", 1);
-	cJSON_AddStringToObject(root, "ip", "192.168.1.42");
-	cJSON_AddStringToObject(root, "netmask", "255.255.255.0");
-	cJSON_AddStringToObject(root, "gw", "192.168.1.1");
-	cJSON_AddStringToObject(root, "dns1", "8.8.8.8");
-	cJSON_AddStringToObject(root, "dns2", "8.8.4.4");
+	cJSON_AddBoolToObject(root, "dhcp", config.use_dhcp);
+	snprintf(buff, sizeof(buff)-1, IPSTR, IP2STR(&config.ip));
+	cJSON_AddStringToObject(root, "ip", buff);
+	snprintf(buff, sizeof(buff)-1, IPSTR, IP2STR(&config.netmask));
+	cJSON_AddStringToObject(root, "netmask", buff);
+	snprintf(buff, sizeof(buff)-1, IPSTR, IP2STR(&config.gw));
+	cJSON_AddStringToObject(root, "gw", buff);
+	snprintf(buff, sizeof(buff)-1, IPSTR, IP2STR(&config.dns1));
+	cJSON_AddStringToObject(root, "dns1", buff);
+	snprintf(buff, sizeof(buff)-1, IPSTR, IP2STR(&config.dns2));
+	cJSON_AddStringToObject(root, "dns2", buff);
 	cJSON_AddStringToObject(root, "ntp1", config.ntp1);
 	cJSON_AddStringToObject(root, "ntp2", config.ntp2);
 	cJSON_AddStringToObject(root, "ntp3", config.ntp3);
-	cJSON_AddStringToObject(root, "mqtt_server", "192.168.1.95");
-	cJSON_AddStringToObject(root, "mqtt_topic", "testTopic");
-	cJSON_AddNumberToObject(root, "timezone", 1);
-	cJSON_AddBoolToObject(root, "daylight", 1);
+	cJSON_AddStringToObject(root, "mqtt_server", config.mqtt_server);
+	cJSON_AddStringToObject(root, "mqtt_topic", config.mqtt_topic);
+	cJSON_AddNumberToObject(root, "timezone", config.timezone);
+	cJSON_AddBoolToObject(root, "daylight", config.daylight);
 	out = cJSON_Print(root);
 	cJSON_Delete(root);
     if (out == NULL) return NULL;

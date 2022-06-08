@@ -10,6 +10,7 @@
 #include "common.h"
 #include "cJSON.h"
 #include "geiger.h"
+#include "config.h"
 
 extern const char *TAG;
 
@@ -149,7 +150,21 @@ esp_err_t reset_cgi_get_handler(httpd_req_t *req)
                 /* Get value of expected key from query string */
                 if (httpd_query_key_value(buf, "token", param, sizeof(param)) == ESP_OK) {
                     ESP_LOGI(TAG, "Found URL query parameter => token=%s", param);
-                    //esp_restart();
+                    if (strcmp(param, configToken) != 0) {
+						resp_str = "invalid_token";
+					}
+					else {
+						if (httpd_query_key_value(buf, "hardreset", param, sizeof(param)) == ESP_OK) {
+							if (strcmp(param, "yes") == 0) {
+								ESP_LOGI(TAG, "Performing hard reset");
+								config_load_defaults();
+								esp_err_t err = config_save_settings_to_flash();
+								if (err != ESP_OK) printf("Error (%s) saving settings to NVS!\n", esp_err_to_name(err));
+							}
+						}
+						resp_str = "ok";
+						//Set reset timer here
+					}
                 }
             }
             free(buf);

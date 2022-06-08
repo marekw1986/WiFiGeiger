@@ -135,7 +135,7 @@ esp_err_t reset_cgi_get_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
-    char* resp_str = "";
+    char resp[32] = "";
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -150,7 +150,7 @@ esp_err_t reset_cgi_get_handler(httpd_req_t *req)
                 if (httpd_query_key_value(buf, "token", param, sizeof(param)) == ESP_OK) {
                     ESP_LOGI(TAG, "Found URL query parameter => token=%s", param);
                     if (strcmp(param, configToken) != 0) {
-						resp_str = "invalid_token";
+						strncpy(resp, "invalid_token", sizeof(resp)-1);
 					}
 					else {
 						if (httpd_query_key_value(buf, "hardreset", param, sizeof(param)) == ESP_OK) {
@@ -161,7 +161,7 @@ esp_err_t reset_cgi_get_handler(httpd_req_t *req)
 								if (err != ESP_OK) printf("Error (%s) saving settings to NVS!\n", esp_err_to_name(err));
 							}
 						}
-						resp_str = "ok";
+						strncpy(resp, "ok", sizeof(resp)-1);
 						set_reset_timer();
 					}
                 }
@@ -171,7 +171,7 @@ esp_err_t reset_cgi_get_handler(httpd_req_t *req)
     }
     /* Send response with custom headers and body set as the
      * string passed in user context*/
-    httpd_resp_send(req, resp_str, strlen(resp_str));
+    httpd_resp_send(req, resp, strlen(resp));
 
     return ESP_OK;
 }
@@ -181,7 +181,7 @@ esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
-    char* resp_str = "";
+    char resp[32] = "";
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -197,7 +197,7 @@ esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
     }
     /* Send response with custom headers and body set as the
      * string passed in user context*/
-    httpd_resp_send(req, resp_str, strlen(resp_str));
+    httpd_resp_send(req, resp, strlen(resp));
 
     return ESP_OK;
 }
@@ -207,7 +207,7 @@ esp_err_t connstatus_cgi_get_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
-    char* resp_str = "";
+    char resp[32] = "";
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -223,7 +223,7 @@ esp_err_t connstatus_cgi_get_handler(httpd_req_t *req)
     }
     /* Send response with custom headers and body set as the
      * string passed in user context*/
-    httpd_resp_send(req, resp_str, strlen(resp_str));
+    httpd_resp_send(req, resp, strlen(resp));
 
     return ESP_OK;
 }
@@ -233,7 +233,7 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
-    char* resp_str = "";
+    char resp[32] = "";
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -253,7 +253,7 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
     }
     /* Send response with custom headers and body set as the
      * string passed in user context*/
-    httpd_resp_send(req, resp_str, strlen(resp_str));
+    httpd_resp_send(req, resp, strlen(resp));
 
     return ESP_OK;
 }
@@ -263,7 +263,7 @@ esp_err_t connect_cgi_post_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
-    char* resp_str = "";
+    char resp[32] = "";
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -283,7 +283,7 @@ esp_err_t connect_cgi_post_handler(httpd_req_t *req)
     }
     /* Send response with custom headers and body set as the
      * string passed in user context*/
-    httpd_resp_send(req, resp_str, strlen(resp_str));
+    httpd_resp_send(req, resp, strlen(resp));
 
     return ESP_OK;
 }
@@ -293,7 +293,8 @@ esp_err_t pass_cgi_post_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
-    char* resp_str = "";
+    char param[32];
+    char resp[32] = "";
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -308,12 +309,41 @@ esp_err_t pass_cgi_post_handler(httpd_req_t *req)
 			}
 			buf[ret] = '\0';
 			ESP_LOGI(TAG, "Found POST data => %s", buf);
+			if (httpd_query_key_value(buf, "token", param, sizeof(param)) == ESP_OK) {
+				ESP_LOGI(TAG, "Token: %s", param);
+				if (strcmp(param, configToken) == 0) {
+					if (httpd_query_key_value(buf, "oldpass", param, sizeof(param)) == ESP_OK) {
+						if (param[0] == '\0') {
+							strncpy(resp, "empty_old", sizeof(resp)-1);
+						}
+						else if (strcmp(param, config.password) != 0) {
+							strncpy(resp, "wrong_old", sizeof(resp)-1);
+						}
+						else {
+							if (httpd_query_key_value(buf, "newpass", param, sizeof(param)) == ESP_OK) {
+								if (param[0] == '\0') {
+									strncpy(resp, "invalid_new", sizeof(resp)-1);
+								}
+								else {
+									snprintf(config.password, sizeof(config.password), "%s", param);
+									config_save_settings_to_flash();
+									strncpy(resp, "ok", sizeof(resp)-1);
+								}
+							}
+							else {strncpy(resp, "invalid_new", sizeof(resp)-1);}
+						}
+					}
+					else {strncpy(resp, "empty_old", sizeof(resp)-1);}
+				}
+				else {strncpy(resp, "invalid_token", sizeof(resp)-1);}
+			}
+			else {strncpy(resp, "invalid_token", sizeof(resp)-1);}
 			free(buf);
 		}
     }
     /* Send response with custom headers and body set as the
      * string passed in user context*/
-    httpd_resp_send(req, resp_str, strlen(resp_str));
+    httpd_resp_send(req, resp, strlen(resp));
 
     return ESP_OK;
 }

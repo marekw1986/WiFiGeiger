@@ -12,12 +12,28 @@
 #include "geiger.h"
 #include "config.h"
 
+#define EMPTY_STR               ""
+#define OK_STR                  "ok"
+#define INVALID_TOKEN_STR       "invalid_token"
+#define INVALID_IP_STR          "invalid_ip"
+#define INVALID_NETMASK_STR     "invalid_netmask"
+#define INVALID_GW_STR          "invalid_gw"
+#define INVALID_DNS1_STR        "invalid_dns1"
+#define INVALID_DNS2_STR        "invalid_dns2"
+#define INVALID_NTP1_STR        "invalid_ntp1"
+#define INVALID_NTP2_STR        "invalid_ntp2"
+#define INVALID_NTP3_STR        "invalid_ntp3"
+#define INVALID_DHCP_STR        "invalid_dhcp"
+#define INVALID_TIMEZONE_STR    "invalid_timezone"
+#define INVALID_DLS_STR         "invalid_dls"
+#define INVALID_MQTT_STR        "invalid_mqtt"
+#define INVALID_TOPIC_STR       "invalid_topic"
+
 extern const char *TAG;
 
 char configToken[10];
 
 static uint8_t is_valid_token(char* str);
-static void clean_respond(httpd_req_t *req, char *buf, const char* resp);
 
 /* An HTTP GET handler */
 esp_err_t hello_get_handler(httpd_req_t *req)
@@ -138,7 +154,6 @@ esp_err_t reset_cgi_get_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
-    char resp[32] = "";
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -153,7 +168,9 @@ esp_err_t reset_cgi_get_handler(httpd_req_t *req)
                 if (httpd_query_key_value(buf, "token", param, sizeof(param)) == ESP_OK) {
                     ESP_LOGI(TAG, "Found URL query parameter => token=%s", param);
                     if (!is_valid_token(param)) {
-						strncpy(resp, "invalid_token", sizeof(resp)-1);
+                        httpd_resp_send(req, INVALID_TOKEN_STR, strlen(INVALID_TOKEN_STR));
+                        free(buf);
+                        return ESP_OK;
 					}
 					else {
 						if (httpd_query_key_value(buf, "hardreset", param, sizeof(param)) == ESP_OK) {
@@ -164,8 +181,10 @@ esp_err_t reset_cgi_get_handler(httpd_req_t *req)
 								if (err != ESP_OK) printf("Error (%s) saving settings to NVS!\n", esp_err_to_name(err));
 							}
 						}
-						strncpy(resp, "ok", sizeof(resp)-1);
+						httpd_resp_send(req, OK_STR, strlen(OK_STR));
 						set_reset_timer();
+                        free(buf);
+                        return ESP_OK;
 					}
                 }
             }
@@ -174,8 +193,7 @@ esp_err_t reset_cgi_get_handler(httpd_req_t *req)
     }
     /* Send response with custom headers and body set as the
      * string passed in user context*/
-    httpd_resp_send(req, resp, strlen(resp));
-
+    httpd_resp_send(req, EMPTY_STR, strlen(EMPTY_STR));
     return ESP_OK;
 }
 
@@ -236,7 +254,6 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
-    char resp[32] = "";
     config_t newConfig = config;
 
     /* Read URL query string length and allocate memory for length + 1,
@@ -255,7 +272,8 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
             char param[32];
             if (httpd_query_key_value(buf, "token", param, sizeof(param)) == ESP_OK) {
                 if (!is_valid_token(param)) {
-                    clean_respond(req, buf, "invalid_token");
+                    httpd_resp_send(req, INVALID_TOKEN_STR, strlen(INVALID_TOKEN_STR));
+                    free(buf);
                     return ESP_OK;                }
                 else {
                     //parse ip here
@@ -264,7 +282,8 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
                             newConfig.ip.addr = ipaddr_addr(param);
                         }
                         else {
-                            clean_respond(req, buf, "invalid_ip");
+                            httpd_resp_send(req, INVALID_IP_STR, strlen(INVALID_IP_STR));
+                            free(buf);
                             return ESP_OK;
                         }
                     }
@@ -274,7 +293,8 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
                             newConfig.netmask.addr = ipaddr_addr(param);
                         }
                         else {
-                            clean_respond(req, buf, "invalid_netmask");
+                            httpd_resp_send(req, INVALID_NETMASK_STR, strlen(INVALID_NETMASK_STR));
+                            free(buf);
                             return ESP_OK;
                         }
                     }
@@ -284,7 +304,8 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
                             newConfig.gw.addr = ipaddr_addr(param);
                         }
                         else {
-                            clean_respond(req, buf, "invalid_gw");
+                            httpd_resp_send(req, INVALID_GW_STR, strlen(INVALID_GW_STR));
+                            free(buf);
                             return ESP_OK;
                         }
                     }                    
@@ -294,7 +315,8 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
                             newConfig.dns1.addr = ipaddr_addr(param);
                         }
                         else {
-                            clean_respond(req, buf, "invalid_dns1");
+                            httpd_resp_send(req, INVALID_DNS1_STR, strlen(INVALID_DNS1_STR));
+                            free(buf);
                             return ESP_OK;
                         }
                     }                    
@@ -304,14 +326,105 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
                             newConfig.dns2.addr = ipaddr_addr(param);
                         }
                         else {
-                            clean_respond(req, buf, "invalid_dns2");
+                            httpd_resp_send(req, INVALID_DNS2_STR, strlen(INVALID_DNS2_STR));
+                            free(buf);
                             return ESP_OK;
                         }
                     }                    
+                    //parse ntp1 here
+                    if (httpd_query_key_value(buf, "ntp1", param, sizeof(param)) == ESP_OK) {
+                        if ( param[0] && (strlen(param) <= (sizeof(newConfig.ntp1)-1)) ) {
+                            strncpy(newConfig.ntp1, param, sizeof(newConfig.ntp1)-1);
+                        }
+                        else {
+                            httpd_resp_send(req, INVALID_NTP1_STR, strlen(INVALID_NTP1_STR));
+                            free(buf);
+                            return ESP_OK;
+                        }
+                    }                    
+                    //parse ntp2 here
+                    if (httpd_query_key_value(buf, "ntp2", param, sizeof(param)) == ESP_OK) {
+                        if ( param[0] && (strlen(param) <= (sizeof(newConfig.ntp2)-1)) ) {
+                            strncpy(newConfig.ntp2, param, sizeof(newConfig.ntp2)-1);
+                        }
+                        else {
+                            httpd_resp_send(req, INVALID_NTP2_STR, strlen(INVALID_NTP2_STR));
+                            free(buf);
+                            return ESP_OK;
+                        }
+                    }                    
+                    //parse ntp3 here
+                    if (httpd_query_key_value(buf, "ntp3", param, sizeof(param)) == ESP_OK) {
+                        if ( param[0] && (strlen(param) <= (sizeof(newConfig.ntp3)-1)) ) {
+                            strncpy(newConfig.ntp3, param, sizeof(newConfig.ntp3)-1);
+                        }
+                        else {
+                            httpd_resp_send(req, INVALID_NTP3_STR, strlen(INVALID_NTP3_STR));
+                            free(buf);
+                            return ESP_OK;
+                        }
+                    }                    
+                    //parse dhcp here
+                    if (httpd_query_key_value(buf, "dhcp", param, sizeof(param)) == ESP_OK) {
+                        if ( strcmp(param, "yes") == 0 ) { newConfig.use_dhcp = 1; }
+                        else if ( strcmp(param, "no") == 0) {newConfig.use_dhcp = 0; }
+                        else {
+                            httpd_resp_send(req, INVALID_DHCP_STR, strlen(INVALID_DHCP_STR));
+                            free(buf);
+                            return ESP_OK;
+                        }
+                    }
+                    //parse timezone here
+                    if (httpd_query_key_value(buf, "timezone", param, sizeof(param)) == ESP_OK) {
+                        int tz = atoi(param);
+                        if ( (tz < -11) || (tz > 13) ) {
+                            httpd_resp_send(req, INVALID_TIMEZONE_STR, strlen(INVALID_TIMEZONE_STR));
+                            free(buf);
+                            return ESP_OK;
+                        }
+                        else {newConfig.timezone = tz;}
+                    }
+                    //parse dls here
+                    if (httpd_query_key_value(buf, "dls", param, sizeof(param)) == ESP_OK) {
+                        if (strcmp(param, "yes") == 0) {newConfig.daylight = 1;}
+                        else if(strcmp(param, "no") == 0) {newConfig.daylight = 0;}
+                        else {
+                            httpd_resp_send(req, INVALID_DLS_STR, strlen(INVALID_DLS_STR));
+                            free(buf);
+                            return ESP_OK;
+                        }
+                    }
+                    //parse mqtt here
+                    if (httpd_query_key_value(buf, "mqtt", param, sizeof(param)) == ESP_OK) {
+                        if (strlen(param) < sizeof(newConfig.mqtt_server)) {strncpy(newConfig.mqtt_server, param, sizeof(newConfig.mqtt_server)-1);}
+                        else {
+                            httpd_resp_send(req, INVALID_MQTT_STR, strlen(INVALID_MQTT_STR));
+                            free(buf);
+                            return ESP_OK;                            
+                        }
+                    }
+                    //parse topic here
+                    if (httpd_query_key_value(buf, "topic", param, sizeof(param)) == ESP_OK) {
+                        if (strlen(param) < sizeof(newConfig.mqtt_topic)) {strncpy(newConfig.mqtt_topic, param, sizeof(newConfig.mqtt_topic)-1);}
+                        else {
+                            httpd_resp_send(req, INVALID_TOPIC_STR, strlen(INVALID_TOPIC_STR));
+                            free(buf);
+                            return ESP_OK;                            
+                        }                        
+                    }
+                    
+                    //we parsed all received commands
+                    //now save to flash
+                    config=newConfig;
+                    config_save_settings_to_flash();
+                    httpd_resp_send(req, OK_STR, strlen(OK_STR));
+                    free(buf);
+                    return ESP_OK;                    
                 }
             }
             else {
-                clean_respond(req, buf, "invalid_token");
+                httpd_resp_send(req, INVALID_TOKEN_STR, strlen(INVALID_TOKEN_STR));
+                free(buf);
                 return ESP_OK;
             }
 			free(buf);
@@ -319,8 +432,7 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
     }
     /* Send response with custom headers and body set as the
      * string passed in user context*/
-    httpd_resp_send(req, resp, strlen(resp));
-
+    httpd_resp_send(req, EMPTY_STR, strlen(EMPTY_STR));
     return ESP_OK;
 }
 
@@ -896,9 +1008,4 @@ void http_server_init (void) {
 static uint8_t is_valid_token(char* str) {
     if (strcmp(str, configToken) != 0) return 0;
     return 1;
-}
-
-static void clean_respond(httpd_req_t *req, char *buf, const char* resp) {
-    if (buf) { free(buf); }
-    httpd_resp_send(req, resp, strlen(resp));
 }

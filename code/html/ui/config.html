@@ -50,6 +50,8 @@ function test() {
 	var ntp3 = document.getElementById('ntp3');
 	var timezone = document.getElementById('timezone');	
 	var daylight = document.getElementById('daylight');	
+    var mqtt = document.getElementyById('mqtt_server');
+    var topic = document.getElementById('mqtt_topic');
 	var token = document.getElementById('token');
 	var inputs = document.getElementsByClassName('ipInput');
 	
@@ -161,20 +163,30 @@ function test() {
 				result.style.display = 'block';
 				result.innerHTML = "Błąd parsowania nowego ustawienia automatycznej zmiany czasu.";					
 			}													
+			else if (http_request.responseText === "invalid_mqtt") {
+				dlsStatus.focus();
+				result.style.display = 'block';
+				result.innerHTML = "Błąd parsowania nowego adresu serwera MQTT.";					
+			}													
+			else if (http_request.responseText === "invalid_topic") {
+				dlsStatus.focus();
+				result.style.display = 'block';
+				result.innerHTML = "Błąd parsowania nowego tematu MQTT.";					
+			}													
 			else if (http_request.responseText === "ok") {
 				result.style.display = 'block';
 				result.style.color = 'green';
-				result.innerHTML = "Konfiguracja sieciowa została zaktualizowana.";
+				result.innerHTML = "Konfiguracja została zaktualizowana.";
 			}
 			else {
 				result.style.display = 'block';
-				result.innerHTML = "Wystąpił błąd podczas zapisywaia ustawień sieciowych";					
+				result.innerHTML = "Wystąpił błąd podczas zapisywaia ustawień.";					
 			}
 		}
 	};
 	http_request.open("POST", "/ui/config.cgi", true);
 	http_request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-	var request = "token=" + token.value + "&dhcp=" + dhcp + "&ip=" + ip.value + "&netmask=" + netmask.value + "&gw=" + gw.value + "&dns1=" + dns1.value + "&dns2=" + dns2.value + "&ntp1=" + ntp1.value + "&ntp2=" + ntp2.value + "&ntp3=" + ntp3.value + "&timezone=" + timezone.value + "&dls=" + dls;
+	var request = "token=" + token.value + "&dhcp=" + dhcp + "&ip=" + ip.value + "&netmask=" + netmask.value + "&gw=" + gw.value + "&dns1=" + dns1.value + "&dns2=" + dns2.value + "&ntp1=" + ntp1.value + "&ntp2=" + ntp2.value + "&ntp3=" + ntp3.value + "&timezone=" + timezone.value + "&dls=" + dls + "&mqtt=" + mqtt.value + "&topic=" + topic.value;
 	http_request.send(request);
 	return true;	
 }

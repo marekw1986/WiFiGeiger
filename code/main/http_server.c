@@ -234,6 +234,7 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
     char*  buf;
     size_t buf_len;
     char resp[32] = "";
+    config_t newConfig = config;
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */

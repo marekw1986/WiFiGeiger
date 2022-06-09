@@ -17,6 +17,7 @@ extern const char *TAG;
 char configToken[10];
 
 static uint8_t is_valid_token(char* str);
+static void clean_respond(httpd_req_t *req, char *buf, const char* resp);
 
 /* An HTTP GET handler */
 esp_err_t hello_get_handler(httpd_req_t *req)
@@ -254,22 +255,64 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
             char param[32];
             if (httpd_query_key_value(buf, "token", param, sizeof(param)) == ESP_OK) {
                 if (!is_valid_token(param)) {
-                    strncpy(resp, "invalid_token", sizeof(resp)-1);
-                }
+                    clean_respond(req, buf, "invalid_token");
+                    return ESP_OK;                }
                 else {
-                    //parse config here
+                    //parse ip here
                     if (httpd_query_key_value(buf, "ip", param, sizeof(param)) == ESP_OK) {
                         if (is_valid_ip_address(param)) {
                             newConfig.ip.addr = ipaddr_addr(param);
                         }
                         else {
-                            strncpy(resp, "invalid_ip", sizeof(resp)-1);
+                            clean_respond(req, buf, "invalid_ip");
+                            return ESP_OK;
                         }
                     }
+                    //parse netmask here
+                    if (httpd_query_key_value(buf, "netmask", param, sizeof(param)) == ESP_OK) {
+                        if (is_valid_ip_address(param)) {
+                            newConfig.netmask.addr = ipaddr_addr(param);
+                        }
+                        else {
+                            clean_respond(req, buf, "invalid_netmask");
+                            return ESP_OK;
+                        }
+                    }
+                    //parse gw here
+                    if (httpd_query_key_value(buf, "gw", param, sizeof(param)) == ESP_OK) {
+                        if (is_valid_ip_address(param)) {
+                            newConfig.gw.addr = ipaddr_addr(param);
+                        }
+                        else {
+                            clean_respond(req, buf, "invalid_gw");
+                            return ESP_OK;
+                        }
+                    }                    
+                    //parse dns1 here
+                    if (httpd_query_key_value(buf, "dns1", param, sizeof(param)) == ESP_OK) {
+                        if (is_valid_ip_address(param)) {
+                            newConfig.dns1.addr = ipaddr_addr(param);
+                        }
+                        else {
+                            clean_respond(req, buf, "invalid_dns1");
+                            return ESP_OK;
+                        }
+                    }                    
+                    //parse dns2 here
+                    if (httpd_query_key_value(buf, "dns2", param, sizeof(param)) == ESP_OK) {
+                        if (is_valid_ip_address(param)) {
+                            newConfig.dns2.addr = ipaddr_addr(param);
+                        }
+                        else {
+                            clean_respond(req, buf, "invalid_dns2");
+                            return ESP_OK;
+                        }
+                    }                    
                 }
             }
             else {
-                strncpy(resp, "invalid_token", sizeof(resp)-1);
+                clean_respond(req, buf, "invalid_token");
+                return ESP_OK;
             }
 			free(buf);
 		}
@@ -853,4 +896,9 @@ void http_server_init (void) {
 static uint8_t is_valid_token(char* str) {
     if (strcmp(str, configToken) != 0) return 0;
     return 1;
+}
+
+static void clean_respond(httpd_req_t *req, char *buf, const char* resp) {
+    if (buf) { free(buf); }
+    httpd_resp_send(req, resp, strlen(resp));
 }

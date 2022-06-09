@@ -16,6 +16,8 @@ extern const char *TAG;
 
 char configToken[10];
 
+static uint8_t is_valid_token(char* str);
+
 /* An HTTP GET handler */
 esp_err_t hello_get_handler(httpd_req_t *req)
 {
@@ -149,7 +151,7 @@ esp_err_t reset_cgi_get_handler(httpd_req_t *req)
                 /* Get value of expected key from query string */
                 if (httpd_query_key_value(buf, "token", param, sizeof(param)) == ESP_OK) {
                     ESP_LOGI(TAG, "Found URL query parameter => token=%s", param);
-                    if (strcmp(param, configToken) != 0) {
+                    if (!is_valid_token(param)) {
 						strncpy(resp, "invalid_token", sizeof(resp)-1);
 					}
 					else {
@@ -249,6 +251,26 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
 			}
 			buf[ret] = '\0';
 			ESP_LOGI(TAG, "Found POST data => %s", buf);
+            char param[32];
+            if (httpd_query_key_value(buf, "token", param, sizeof(param)) == ESP_OK) {
+                if (!is_valid_token(param)) {
+                    strncpy(resp, "invalid_token", sizeof(resp)-1);
+                }
+                else {
+                    //parse config here
+                    if (httpd_query_key_value(buf, "ip", param, sizeof(param)) == ESP_OK) {
+                        if (is_valid_ip_address(param)) {
+                            newConfig.ip.addr = ipaddr_addr(param);
+                        }
+                        else {
+                            strncpy(resp, "invalid_ip", sizeof(resp)-1);
+                        }
+                    }
+                }
+            }
+            else {
+                strncpy(resp, "invalid_token", sizeof(resp)-1);
+            }
 			free(buf);
 		}
     }
@@ -825,4 +847,10 @@ void http_server_init (void) {
 	ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &server));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
     server = start_webserver();
+}
+
+
+static uint8_t is_valid_token(char* str) {
+    if (strcmp(str, configToken) != 0) return 0;
+    return 1;
 }

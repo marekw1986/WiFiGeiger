@@ -322,7 +322,7 @@ esp_err_t pass_cgi_post_handler(httpd_req_t *req)
 						}
 						else {
 							if (httpd_query_key_value(buf, "newpass", param, sizeof(param)) == ESP_OK) {
-								if (param[0] == '\0') {
+								if (!is_password_valid(param)) {
 									strncpy(resp, "invalid_new", sizeof(resp)-1);
 								}
 								else {

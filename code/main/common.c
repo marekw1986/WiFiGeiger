@@ -32,6 +32,7 @@ os_timer_t reset_timer;
 uint32_t uptime = 0;
 
 static void restart_timer_func(void* param);
+static uint8_t validate_number(char *str);
 
 uint32_t get_uptime(void) {
     return uptime;
@@ -136,4 +137,36 @@ void set_reset_timer (void) {
 	os_timer_disarm(&reset_timer);
 	os_timer_setfn(&reset_timer, restart_timer_func, NULL);
 	os_timer_arm(&reset_timer, 1000, 0);	
+}
+
+uint8_t is_password_valid(char* pass) {
+    if (pass[0] == '\0') return 0;
+    if ( strlen(pass) > (sizeof(config.password)-1) ) return 0;
+    return 1;
+}
+
+static uint8_t validate_number(char *str) {
+    while (*str) {
+        if(!isdigit(*str)) { return 0; }
+        str++;
+    }
+    return 1;
+}
+
+uint8_t is_valid_ip_address(char *ip) {
+    int num, dots = 0;
+    char *ptr;
+    if (ip == NULL) { return 0; }
+        ptr = strtok(ip, ".");
+        if (ptr == NULL) { return 0; }
+    while (ptr) {
+        if (!validate_number(ptr)) { return 0; }
+        num = atoi(ptr);
+        if (num >= 0 && num <= 255) {
+            ptr = strtok(NULL, ".");
+            if (ptr != NULL) { dots++; }
+        } else { return 0; }
+    }
+    if (dots != 3) { return 0; }
+    return 1;
 }

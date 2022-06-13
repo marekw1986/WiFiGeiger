@@ -11,45 +11,30 @@
 
 extern const char *TAG;
 
-static uint8_t scanInProgress = 0;
+static int scanInProgress = 0;
+os_timer_t scan_timer;
 
 static char* constructAPsJSON(void);
+static void scan_timer_func(void* param);
 
 esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
 {
-    char*  buf;
-    size_t buf_len;
 	char *out;
-
-    /* Read URL query string length and allocate memory for length + 1,
-     * extra byte for null termination */
-    buf_len = httpd_req_get_url_query_len(req) + 1;
-    if (buf_len > 1) {
-        buf = malloc(buf_len);
-        if (buf) {
-            if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK) {
-                ESP_LOGI(TAG, "Found URL query => %s", buf);
-            }
-            free(buf);
-        }
-    }
-    /* Send response with custom headers and body set as the
-     * string passed in user context*/
      
     out = constructAPsJSON();
     if (out) {
+		httpd_resp_set_type(req, "application/json");
         httpd_resp_send(req, out, strlen(out));
         free(out);
         if (!scanInProgress) {
-            ESP_LOGI(TAG, "Scanning WiFi"); 
-            esp_wifi_scan_start(NULL, false);
-            scanInProgress = 1;
+			os_timer_disarm(&scan_timer);
+			os_timer_setfn(&scan_timer, scan_timer_func, NULL);
+			os_timer_arm(&scan_timer, 500, 0);	
         }
         return ESP_OK;        
     }
      
-    httpd_resp_send(req, "", strlen(""));
-    return ESP_OK;
+    return ESP_FAIL;
 }
 
 
@@ -214,7 +199,7 @@ static char* constructAPsJSON(void) {
     if (scanInProgress == 0) {
         APs = cJSON_AddArrayToObject(result, "APs");
         cJSON_AddItemToArray(APs, ap_object = cJSON_CreateObject());
-        cJSON_AddStringToObject(ap_object, "bssid", "test");
+        cJSON_AddStringToObject(ap_object, "essid", "test");
         cJSON_AddNumberToObject(ap_object, "rssi", -45);
     }
 	out = cJSON_Print(root);
@@ -222,4 +207,19 @@ static char* constructAPsJSON(void) {
     if (out == NULL) return NULL;
 	
 	return out;
+}
+
+static void scan_timer_func(void* param) {
+	ESP_LOGI(TAG, "Scanning WiFi"); 
+	wifi_scan_config_t scan_config = {
+		.ssid = 0,
+		.bssid = 0,
+		.channel = 0,	/* 0--all channel scan */
+		.show_hidden = 0,
+		.scan_type = WIFI_SCAN_TYPE_ACTIVE,
+		.scan_time.active.min = 120,
+		.scan_time.active.max = 150,
+	};
+	esp_wifi_scan_start(&scan_config, false);
+	scanInProgress = 1;	
 }

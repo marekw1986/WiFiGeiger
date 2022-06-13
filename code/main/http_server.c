@@ -11,6 +11,7 @@
 #include "cJSON.h"
 #include "geiger.h"
 #include "config.h"
+#include "wificgi.h"
 
 #define EMPTY_STR               ""
 #define OK_STR                  "ok"
@@ -114,42 +115,6 @@ esp_err_t hello_get_handler(httpd_req_t *req)
 }
 
 
-esp_err_t setmode_cgi_get_handler(httpd_req_t *req)
-{
-    char*  buf;
-    size_t buf_len;
-
-    /* Read URL query string length and allocate memory for length + 1,
-     * extra byte for null termination */
-    buf_len = httpd_req_get_url_query_len(req) + 1;
-    if (buf_len > 1) {
-        buf = malloc(buf_len);
-        if (buf) {
-            if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK) {
-                ESP_LOGI(TAG, "Found URL query => %s", buf);
-                char param[32];
-                /* Get value of expected key from query string */
-                if (httpd_query_key_value(buf, "mode", param, sizeof(param)) == ESP_OK) {
-                    ESP_LOGI(TAG, "Found URL query parameter => mode=%s", param);
-                    esp_wifi_set_mode(atoi(param));
-                }
-            }
-            free(buf);
-        }
-    }
-    /* Send response with custom headers and body set as the
-     * string passed in user context*/
-    const char* resp_str = "<html><head>\
-    <script language=\"JavaScript\" type=\"text/javascript\">\
-    function redirect() {location.href=\"/ui/wifi\";}\
-	</script>\
-    </head><body onload=\"redirect()\"></body></html>";
-    httpd_resp_send(req, resp_str, strlen(resp_str));
-
-    return ESP_OK;
-}
-
-
 esp_err_t reset_cgi_get_handler(httpd_req_t *req)
 {
     char*  buf;
@@ -194,58 +159,6 @@ esp_err_t reset_cgi_get_handler(httpd_req_t *req)
     /* Send response with custom headers and body set as the
      * string passed in user context*/
     httpd_resp_send(req, EMPTY_STR, strlen(EMPTY_STR));
-    return ESP_OK;
-}
-
-
-esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
-{
-    char*  buf;
-    size_t buf_len;
-    char resp[32] = "";
-
-    /* Read URL query string length and allocate memory for length + 1,
-     * extra byte for null termination */
-    buf_len = httpd_req_get_url_query_len(req) + 1;
-    if (buf_len > 1) {
-        buf = malloc(buf_len);
-        if (buf) {
-            if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK) {
-                ESP_LOGI(TAG, "Found URL query => %s", buf);
-            }
-            free(buf);
-        }
-    }
-    /* Send response with custom headers and body set as the
-     * string passed in user context*/
-    httpd_resp_send(req, resp, strlen(resp));
-
-    return ESP_OK;
-}
-
-
-esp_err_t connstatus_cgi_get_handler(httpd_req_t *req)
-{
-    char*  buf;
-    size_t buf_len;
-    char resp[32] = "";
-
-    /* Read URL query string length and allocate memory for length + 1,
-     * extra byte for null termination */
-    buf_len = httpd_req_get_url_query_len(req) + 1;
-    if (buf_len > 1) {
-        buf = malloc(buf_len);
-        if (buf) {
-            if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK) {
-                ESP_LOGI(TAG, "Found URL query => %s", buf);
-            }
-            free(buf);
-        }
-    }
-    /* Send response with custom headers and body set as the
-     * string passed in user context*/
-    httpd_resp_send(req, resp, strlen(resp));
-
     return ESP_OK;
 }
 
@@ -437,36 +350,6 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
 }
 
 
-esp_err_t connect_cgi_post_handler(httpd_req_t *req)
-{
-    char*  buf;
-    size_t buf_len;
-    char resp[32] = "";
-
-    /* Read URL query string length and allocate memory for length + 1,
-     * extra byte for null termination */
-    buf_len = (req->content_len) + 1;
-    if (buf_len > 1) {
-        buf = malloc(buf_len);
-        if (buf) {
-			int ret = httpd_req_recv(req, buf, buf_len);
-			if (ret <= 0) {
-				if (ret == HTTPD_SOCK_ERR_TIMEOUT) {httpd_resp_send_408(req);}
-				return ESP_FAIL;
-			}
-			buf[ret] = '\0';
-			ESP_LOGI(TAG, "Found POST data => %s", buf);
-			free(buf);
-		}
-    }
-    /* Send response with custom headers and body set as the
-     * string passed in user context*/
-    httpd_resp_send(req, resp, strlen(resp));
-
-    return ESP_OK;
-}
-
-
 esp_err_t pass_cgi_post_handler(httpd_req_t *req)
 {
     char*  buf;
@@ -627,40 +510,6 @@ esp_err_t sysinfo_get_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-esp_err_t wifiinfo_get_handler(httpd_req_t *req) {
-	char *data;
-    cJSON *root;
-	
-	root = cJSON_CreateObject();
-	{
-		char buff[32];
-		wifi_mode_t mode;
-		if (esp_wifi_get_mode(&mode) == ESP_OK) {
-			switch(mode) {
-				case WIFI_MODE_STA:
-				snprintf(buff, sizeof(buff)-1, "STA");
-				break;
-				case WIFI_MODE_AP:
-				snprintf(buff, sizeof(buff)-1, "AP");
-				break;
-				case WIFI_MODE_APSTA:
-				snprintf(buff, sizeof(buff)-1, "AP+STA");
-				break;
-				default:
-				snprintf(buff, sizeof(buff)-1, "undetermined (error)");
-				break;	
-			}
-			cJSON_AddStringToObject(root, "mode", buff);
-		}
-	}
-	data = cJSON_Print(root);
-	cJSON_Delete(root);
-	httpd_resp_set_type(req, "application/json");
-    httpd_resp_send(req, data, strlen(data));
-    free(data);	
-	
-	return ESP_OK;
-}
 
 esp_err_t token_get_handler(httpd_req_t *req) {
 	for (uint8_t i=0; i<(sizeof(configToken)-1); i++) configToken[i] = 'a'+(esp_random() % 26);

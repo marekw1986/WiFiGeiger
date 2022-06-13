@@ -155,6 +155,10 @@ esp_err_t wifiinfo_get_handler(httpd_req_t *req) {
 			}
 			cJSON_AddStringToObject(root, "mode", buff);
 		}
+		wifi_config_t wifi_cfg;
+		if (esp_wifi_get_config(ESP_IF_WIFI_STA, &wifi_cfg) == ESP_OK) {
+			cJSON_AddStringToObject(root, "ssid", (const char*)wifi_cfg.sta.ssid);
+		}
 	}
 	data = cJSON_Print(root);
 	cJSON_Delete(root);
@@ -189,6 +193,8 @@ static char* constructAPsJSON(void) {
 	cJSON *result;
     cJSON *APs;
     cJSON *ap_object;
+    
+    char buf[32];
 	char *out;
 	
 	root = cJSON_CreateObject();
@@ -200,7 +206,8 @@ static char* constructAPsJSON(void) {
         for (int i = 0; i < ap_count; i++) {
 			cJSON_AddItemToArray(APs, ap_object = cJSON_CreateObject());
 			cJSON_AddStringToObject(ap_object, "essid", (const char*)ap_info[i].ssid);
-			cJSON_AddStringToObject(ap_object, "bssid", "11:22:33:44:55:66");
+			snprintf(buf, sizeof(buf)-1, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx", ap_info[i].bssid[0],  ap_info[i].bssid[1], ap_info[i].bssid[2], ap_info[i].bssid[3], ap_info[i].bssid[4], ap_info[i].bssid[5]);
+			cJSON_AddStringToObject(ap_object, "bssid", buf);
 			cJSON_AddNumberToObject(ap_object, "rssi", ap_info[i].rssi);
 			cJSON_AddNumberToObject(ap_object, "enc", ap_info[i].authmode);
 			cJSON_AddNumberToObject(ap_object, "channel", ap_info[i].primary);

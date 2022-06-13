@@ -26,8 +26,11 @@
 #include "common.h"
 #include "geiger.h"
 #include "config.h"
+#include "ds3231.h"
 
 extern const char *TAG;
+extern SemaphoreHandle_t i2cSemaphore;
+
 os_timer_t reset_timer;
 uint32_t uptime = 0;
 
@@ -169,4 +172,17 @@ uint8_t is_valid_ip_address(char *ip) {
     }
     if (dots != 3) { return 0; }
     return 1;
+}
+
+void sntp_sync_time_func(struct timeval *tv) {
+	ESP_LOGI(TAG, "SNTP synchronized. Seconds: %lu", tv->tv_sec);
+	time_t rawtime = tv->tv_sec;
+	struct tm *time = gmtime(&rawtime);
+	if (xSemaphoreTake(i2cSemaphore, portMAX_DELAY) == pdTRUE) {
+		ds3231_setTime(time);
+		xSemaphoreGive(i2cSemaphore);
+	}
+	else {
+		ESP_LOGI(TAG, "I2C semaphore taken");
+	}
 }

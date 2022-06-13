@@ -10,7 +10,7 @@
 <script type="text/javascript">
 
 var xhr=j();
-var currAp="%currSsid%";
+var currAp="";
 
 function createInputForAp(ap) {
 	if (ap.essid=="" && ap.rssi==0) return;
@@ -77,6 +77,7 @@ window.onload=function(e) {
 	loadJSON("/wifiinfo.json", function(data) {
 		var wifi_mode = document.getElementById('wifi_mode');
 		var wifi_ap_warn = document.getElementById('wifi_ap_warn');
+		currAp = data.ssid;
 		wifi_mode.innerHTML = data.mode;
 		if (data.mode === "STA") {
 			wifi_ap_warn.innerHTML = "Kliknij <a href=\"setmode.cgi?mode=3\">tutaj</a> aby przejść do trybu AP+STA.";
@@ -107,7 +108,7 @@ Wybierz jedną z dostępnych sieci...<br>
 <div id="aps">Skanowanie...</div>
 <br>
 Hasło: <br />
-<input type="text" name="passwd" val="%WiFiPasswd%"> <br><br>
+<input type="text" name="passwd" val=""> <br><br>
 <input type="submit" name="connect" value="Połącz">
 </p>
 </div>

@@ -34,6 +34,7 @@
 const char *TAG = "wiFiGeiger";
 
 SemaphoreHandle_t xSemaphore = NULL;
+SemaphoreHandle_t i2cSemaphore = NULL;
 
 
 void gpio_isr_rtc_handler (void *arg) {
@@ -49,26 +50,25 @@ void gpio_isr_rtc_handler (void *arg) {
 void i2c_task_example(void *arg) {
 	time_t now;
 	struct tm timeinfo;
-    
-    timeinfo.tm_year = 121;
-    timeinfo.tm_mon = 2;
-    timeinfo.tm_mday = 18;
-    timeinfo.tm_sec = 0;
-    timeinfo.tm_hour = 14;
-    timeinfo.tm_min = 10;
-    
-    ds3231_setTime(&timeinfo);
 
     while(1) {
 		xSemaphoreTake( xSemaphore, portMAX_DELAY );
-		//if (ds3231_getTime(&timeinfo)) {
-		//	printf(asctime(&timeinfo));
-		//}
-		//else {printf("Time read FAILURE\r\n");}
-		time(&now);
-		localtime_r(&now, &timeinfo);	
-		printf("Sivert: %f, CPM: %d\r\n", cpm2sievert(geiger_get_cpm()), geiger_get_cpm());
-		printf(asctime(&timeinfo));
+		
+		if (xSemaphoreTake(i2cSemaphore, portMAX_DELAY) == pdTRUE) {
+			if (ds3231_getTime(&timeinfo)) {
+				printf(asctime(&timeinfo));
+			}
+			else {printf("Time read FAILURE\r\n");}
+			xSemaphoreGive(i2cSemaphore);
+		}
+		else {
+			ESP_LOGI(TAG, "I2C semaphore taken");
+		}
+		
+		//time(&now);
+		//localtime_r(&now, &timeinfo);	
+		//printf("Sivert: %f, CPM: %d\r\n", cpm2sievert(geiger_get_cpm()), geiger_get_cpm());
+		//printf(asctime(&timeinfo));
 		//vTaskDelay(1000 / portTICK_RATE_MS);
 		
     }
@@ -116,6 +116,9 @@ void app_main() {
     
 	xSemaphore = xSemaphoreCreateBinary();
 	if( xSemaphore == NULL ) while(1);    
+	i2cSemaphore = xSemaphoreCreateBinary();
+	if( i2cSemaphore == NULL ) while(1);
+	xSemaphoreGive(i2cSemaphore);    
     
     printf("Hello world!\n");
 	geiger_init();
@@ -125,6 +128,7 @@ void app_main() {
 	
 	sntp_setoperatingmode(SNTP_OPMODE_POLL);
     sntp_setservername(0, "pool.ntp.org");
+    sntp_set_time_sync_notification_cb(sntp_sync_time_func);
     sntp_init();
     
     setenv("TZ", "GMT-1GMT-2,M3.5.0/2,M10.5.0/3", 1);

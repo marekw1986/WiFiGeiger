@@ -11,6 +11,8 @@
 
 extern const char *TAG;
 
+static uint8_t scanInProgress = 0;
+
 esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
 {
     char*  buf;

@@ -36,6 +36,7 @@ esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
     if (!scanInProgress) {
         ESP_LOGI(TAG, "Scanning WiFi"); 
         esp_wifi_scan_start(NULL, false);
+        scanInProgress = 1;
     }
      
     httpd_resp_send(req, "", strlen(""));
@@ -174,7 +175,7 @@ void scan_end_event(void* handler_arg, esp_event_base_t base, int32_t id, void* 
     wifi_ap_record_t *ap_info;
     
     ESP_LOGI(TAG, "Scan ended");
-    
+    scanInProgress = 0;
     ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
     ESP_LOGI(TAG, "Total APs scanned = %u", ap_count);
     if (ap_count > 0) {

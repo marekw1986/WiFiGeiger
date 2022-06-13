@@ -13,10 +13,13 @@ extern const char *TAG;
 
 static uint8_t scanInProgress = 0;
 
+static char* constructAPsJSON(void);
+
 esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
+	char *out;
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -37,6 +40,15 @@ esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
         ESP_LOGI(TAG, "Scanning WiFi"); 
         esp_wifi_scan_start(NULL, false);
         scanInProgress = 1;
+    }
+    
+    if (scanInProgress) {
+        out = constructAPsJSON();
+        if (out) {
+            httpd_resp_send(req, out, strlen(out));
+            free(out);
+            return ESP_OK;
+        }
     }
      
     httpd_resp_send(req, "", strlen(""));
@@ -190,4 +202,20 @@ void scan_end_event(void* handler_arg, esp_event_base_t base, int32_t id, void* 
 		}
 		free(ap_info);
 	}
+}
+
+static char* constructAPsJSON(void) {
+	cJSON *root;
+	cJSON *result;
+	char *out;
+	
+	root = cJSON_CreateObject();
+    if (root == NULL) return NULL;
+	cJSON_AddItemToObject(root, "geiger", result = cJSON_CreateObject());
+	cJSON_AddNumberToObject(result, "inProgress", scanInProgress);
+	out = cJSON_Print(root);
+	cJSON_Delete(root);
+    if (out == NULL) return NULL;
+	
+	return out;
 }

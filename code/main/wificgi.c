@@ -211,7 +211,7 @@ static char* constructAPsJSON(void) {
 	
 	root = cJSON_CreateObject();
     if (root == NULL) return NULL;
-	cJSON_AddItemToObject(root, "geiger", result = cJSON_CreateObject());
+	cJSON_AddItemToObject(root, "result", result = cJSON_CreateObject());
 	cJSON_AddNumberToObject(result, "inProgress", scanInProgress);
 	out = cJSON_Print(root);
 	cJSON_Delete(root);

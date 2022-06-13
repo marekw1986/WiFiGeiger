@@ -207,12 +207,20 @@ void scan_end_event(void* handler_arg, esp_event_base_t base, int32_t id, void* 
 static char* constructAPsJSON(void) {
 	cJSON *root;
 	cJSON *result;
+    cJSON *APs;
+    cJSON *ap_object;
 	char *out;
 	
 	root = cJSON_CreateObject();
     if (root == NULL) return NULL;
 	cJSON_AddItemToObject(root, "result", result = cJSON_CreateObject());
 	cJSON_AddNumberToObject(result, "inProgress", scanInProgress);
+    if (scanInProgress == 0) {
+        APs = cJSON_AddArrayToObject(result, "APs");
+        cJSON_AddItemToArray(APs, ap_object = cJSON_CreateObject());
+        cJSON_AddStringToObject(ap_object, "bssid", "test");
+        cJSON_AddNumberToObject(ap_object, "rssi", -45);
+    }
 	out = cJSON_Print(root);
 	cJSON_Delete(root);
     if (out == NULL) return NULL;

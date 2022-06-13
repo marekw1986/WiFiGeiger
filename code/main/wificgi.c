@@ -17,7 +17,9 @@ esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
-    char resp[32] = "";
+    //uint16_t ap_count = 0;
+    //uint16_t number = DEFAULT_SCAN_LIST_SIZE;
+    //wifi_ap_record_t ap_info[DEFAULT_SCAN_LIST_SIZE];
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -33,7 +35,19 @@ esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
     }
     /* Send response with custom headers and body set as the
      * string passed in user context*/
-    httpd_resp_send(req, resp, strlen(resp));
+    
+    ESP_LOGI(TAG, "Scanning WiFi"); 
+    esp_wifi_scan_start(NULL, false);
+    //ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&number, ap_info));
+    //ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
+    //ESP_LOGI(TAG, "Total APs scanned = %u", ap_count);
+    //for (int i = 0; (i < DEFAULT_SCAN_LIST_SIZE) && (i < ap_count); i++) {
+    //    ESP_LOGI(TAG, "SSID \t\t%s", ap_info[i].ssid);
+    //    ESP_LOGI(TAG, "RSSI \t\t%d", ap_info[i].rssi);
+    //    ESP_LOGI(TAG, "Channel \t\t%d\n", ap_info[i].primary);
+    //}
+     
+    httpd_resp_send(req, "", strlen(""));
 
     return ESP_OK;
 }

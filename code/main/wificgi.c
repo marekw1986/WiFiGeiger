@@ -35,24 +35,20 @@ esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
     }
     /* Send response with custom headers and body set as the
      * string passed in user context*/
-    
-    if (!scanInProgress) {
-        ESP_LOGI(TAG, "Scanning WiFi"); 
-        esp_wifi_scan_start(NULL, false);
-        scanInProgress = 1;
-    }
-    
-    if (scanInProgress) {
-        out = constructAPsJSON();
-        if (out) {
-            httpd_resp_send(req, out, strlen(out));
-            free(out);
-            return ESP_OK;
+     
+    out = constructAPsJSON();
+    if (out) {
+        httpd_resp_send(req, out, strlen(out));
+        free(out);
+        if (!scanInProgress) {
+            ESP_LOGI(TAG, "Scanning WiFi"); 
+            esp_wifi_scan_start(NULL, false);
+            scanInProgress = 1;
         }
+        return ESP_OK;        
     }
      
     httpd_resp_send(req, "", strlen(""));
-
     return ESP_OK;
 }
 

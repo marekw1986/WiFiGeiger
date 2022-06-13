@@ -34,6 +34,30 @@ const char *TAG = "wiFiGeiger";
 
 SemaphoreHandle_t xSemaphore = NULL;
 
+void scan_end_event(void* handler_arg, esp_event_base_t base, int32_t id, void* event_data)
+{
+    uint16_t ap_count = 0;
+    wifi_ap_record_t *ap_info;
+    
+    ESP_LOGI(TAG, "Scan ended");
+    
+    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
+    ESP_LOGI(TAG, "Total APs scanned = %u", ap_count);
+    if (ap_count > 0) {
+		ap_info = (wifi_ap_record_t*)malloc(ap_count * sizeof(wifi_ap_record_t));
+		if (ap_info) {
+			ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&ap_count, ap_info));
+			for (int i = 0; i < ap_count; i++) {
+				ESP_LOGI(TAG, "SSID \t\t%s", ap_info[i].ssid);
+				ESP_LOGI(TAG, "RSSI \t\t%d", ap_info[i].rssi);
+				ESP_LOGI(TAG, "Channel \t\t%d\n", ap_info[i].primary);
+			}
+		}
+		free(ap_info);
+	}
+}
+
+
 void gpio_isr_rtc_handler (void *arg) {
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	
@@ -133,6 +157,9 @@ void app_main() {
     spi_filesystem_init();
     
     xTaskCreate(i2c_task_example, "i2c_task_example", 4096, NULL, 10, NULL);
+    
+    esp_event_loop_create_default();
+    esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_SCAN_DONE, scan_end_event, NULL);
 }
 
 

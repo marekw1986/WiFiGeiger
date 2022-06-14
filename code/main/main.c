@@ -48,7 +48,7 @@ void gpio_isr_rtc_handler (void *arg) {
 
 
 void i2c_task_example(void *arg) {
-	time_t now;
+	//time_t now;
 	struct tm timeinfo;
 
     while(1) {
@@ -125,6 +125,21 @@ void app_main() {
 	  
 	wifi_init_sta();
 	esp_wifi_set_ps(WIFI_PS_NONE);
+    
+    //First we try to set system time from I2C RTC
+    //In case if there is no SNTP to use
+    if (xSemaphoreTake(i2cSemaphore, portMAX_DELAY) == pdTRUE) {
+        struct tm current_time;
+        uint8_t res = ds3231_getTime(&current_time);
+        xSemaphoreGive(i2cSemaphore);
+        if (res) {
+            struct timeval tv;
+            tv.tv_sec = mktime(&current_time);
+            tv.tv_usec = 0;
+            settimeofday(&tv, NULL);
+        }
+    }
+    else {ESP_LOGI(TAG, "I2C semaphore taken");}
 	
 	sntp_setoperatingmode(SNTP_OPMODE_POLL);
     sntp_setservername(0, "pool.ntp.org");

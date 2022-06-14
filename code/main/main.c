@@ -48,27 +48,27 @@ void gpio_isr_rtc_handler (void *arg) {
 
 
 void i2c_task_example(void *arg) {
-	//time_t now;
+	time_t now;
 	struct tm timeinfo;
 
     while(1) {
 		xSemaphoreTake( xSemaphore, portMAX_DELAY );
 		
-		if (xSemaphoreTake(i2cSemaphore, portMAX_DELAY) == pdTRUE) {
-			if (ds3231_getTime(&timeinfo)) {
-				printf(asctime(&timeinfo));
-			}
-			else {printf("Time read FAILURE\r\n");}
-			xSemaphoreGive(i2cSemaphore);
-		}
-		else {
-			ESP_LOGI(TAG, "I2C semaphore taken");
-		}
+		//if (xSemaphoreTake(i2cSemaphore, portMAX_DELAY) == pdTRUE) {
+		//	if (ds3231_getTime(&timeinfo)) {
+		//		printf(asctime(&timeinfo));
+		//	}
+		//	else {printf("Time read FAILURE\r\n");}
+		//	xSemaphoreGive(i2cSemaphore);
+		//}
+		//else {
+		//	ESP_LOGI(TAG, "I2C semaphore taken");
+		//}
 		
-		//time(&now);
-		//localtime_r(&now, &timeinfo);	
-		//printf("Sivert: %f, CPM: %d\r\n", cpm2sievert(geiger_get_cpm()), geiger_get_cpm());
-		//printf(asctime(&timeinfo));
+		time(&now);
+		localtime_r(&now, &timeinfo);	
+		printf("Sivert: %f, CPM: %d\r\n", cpm2sievert(geiger_get_cpm()), geiger_get_cpm());
+		printf(asctime(&timeinfo));
 		//vTaskDelay(1000 / portTICK_RATE_MS);
 		
     }

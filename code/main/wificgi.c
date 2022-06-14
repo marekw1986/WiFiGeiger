@@ -105,7 +105,6 @@ esp_err_t connect_cgi_post_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
-    char resp[32] = "";
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -120,12 +119,21 @@ esp_err_t connect_cgi_post_handler(httpd_req_t *req)
 			}
 			buf[ret] = '\0';
 			ESP_LOGI(TAG, "Found POST data => %s", buf);
+			char param[32];
+			if (httpd_query_key_value(buf, "essid", param, sizeof(param)) == ESP_OK) {
+				ESP_LOGI(TAG, "ESSID: %s", param);
+			}
+			if (httpd_query_key_value(buf, "passwd", param, sizeof(param)) == ESP_OK) {
+				ESP_LOGI(TAG, "Password: %s", param);
+			}			
 			free(buf);
 		}
     }
     /* Send response with custom headers and body set as the
      * string passed in user context*/
-    httpd_resp_send(req, resp, strlen(resp));
+    httpd_resp_set_hdr(req, "Location", "/ui/wifi");
+    httpd_resp_set_status(req, "301 Moved Permanently");
+    httpd_resp_send(req, "", strlen(""));
 
     return ESP_OK;
 }
@@ -201,7 +209,7 @@ static char* constructAPsJSON(void) {
     if (root == NULL) return NULL;
 	cJSON_AddItemToObject(root, "result", result = cJSON_CreateObject());
 	cJSON_AddNumberToObject(result, "inProgress", scanInProgress);
-    if ( (scanInProgress == 0) && (ap_count > 0) ) {
+    if ( scanInProgress == 0 ) {
         APs = cJSON_AddArrayToObject(result, "APs");
         for (int i = 0; i < ap_count; i++) {
 			cJSON_AddItemToArray(APs, ap_object = cJSON_CreateObject());

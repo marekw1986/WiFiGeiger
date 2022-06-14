@@ -177,9 +177,10 @@ uint8_t is_valid_ip_address(char *ip) {
 void sntp_sync_time_func(struct timeval *tv) {
 	ESP_LOGI(TAG, "SNTP synchronized. Seconds: %lu", tv->tv_sec);
 	time_t rawtime = tv->tv_sec;
-	struct tm *time = gmtime(&rawtime);
+	struct tm time;
+	gmtime_r(&rawtime, &time);
 	if (xSemaphoreTake(i2cSemaphore, portMAX_DELAY) == pdTRUE) {
-		ds3231_setTime(time);
+		ds3231_setTime(&time);
 		xSemaphoreGive(i2cSemaphore);
 	}
 	else {

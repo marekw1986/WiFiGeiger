@@ -6,6 +6,7 @@
 #include "esp_netif.h"
 #include "esp_event.h"
 #include "esp_wifi.h"
+#include "http_server.h"
 #include "cJSON.h"
 #include "wificgi.h"
 
@@ -23,6 +24,8 @@ static void scan_timer_func(void* param);
 esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
 {
 	char *out;
+	
+	if (!check_authentication(req)) {return ESP_OK;}
      
     out = constructAPsJSON();
     if (out) {
@@ -46,6 +49,8 @@ esp_err_t connstatus_cgi_get_handler(httpd_req_t *req)
     char*  buf;
     size_t buf_len;
     char resp[32] = "";
+    
+    if (!check_authentication(req)) {return ESP_OK;}
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -70,6 +75,8 @@ esp_err_t setmode_cgi_get_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
+    
+    if (!check_authentication(req)) {return ESP_OK;}
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -105,6 +112,8 @@ esp_err_t connect_cgi_post_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
+    
+    if (!check_authentication(req)) {return ESP_OK;}
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -141,6 +150,8 @@ esp_err_t connect_cgi_post_handler(httpd_req_t *req)
 esp_err_t wifiinfo_get_handler(httpd_req_t *req) {
 	char *data;
     cJSON *root;
+    
+    if (!check_authentication(req)) {return ESP_OK;}
 	
 	root = cJSON_CreateObject();
 	{

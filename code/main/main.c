@@ -118,7 +118,10 @@ void app_main() {
 	if( xSemaphore == NULL ) while(1);    
 	i2cSemaphore = xSemaphoreCreateBinary();
 	if( i2cSemaphore == NULL ) while(1);
-	xSemaphoreGive(i2cSemaphore);    
+	xSemaphoreGive(i2cSemaphore);
+	
+	esp_event_loop_create_default();
+    esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_SCAN_DONE, scan_end_event, NULL);    
     
     printf("Hello world!\n");
 	geiger_init();
@@ -154,9 +157,6 @@ void app_main() {
     spi_filesystem_init();
     
     xTaskCreate(i2c_task_example, "i2c_task_example", 4096, NULL, 10, NULL);
-    
-    esp_event_loop_create_default();
-    esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_SCAN_DONE, scan_end_event, NULL);
 }
 
 

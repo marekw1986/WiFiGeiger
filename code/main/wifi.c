@@ -50,8 +50,6 @@ void wifi_init_sta(void) {
 
     tcpip_adapter_init();
 
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
@@ -73,8 +71,8 @@ void wifi_init_sta(void) {
         wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
     }
 
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
-    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
+    //ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
+    //ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
     ESP_ERROR_CHECK(esp_wifi_start() );
 
     ESP_LOGI(TAG, "wifi_init_sta finished.");

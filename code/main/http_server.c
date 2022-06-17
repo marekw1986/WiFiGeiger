@@ -6,6 +6,7 @@
 #include "esp_netif.h"
 #include "esp_event.h"
 #include "esp_wifi.h"
+#include "mbedtls/base64.h"
 #include "http_server.h"
 #include "common.h"
 #include "cJSON.h"
@@ -30,17 +31,86 @@
 #define INVALID_MQTT_STR        "invalid_mqtt"
 #define INVALID_TOPIC_STR       "invalid_topic"
 
+#define HTTPD_401      "401 UNAUTHORIZED"           /*!< HTTP Response 401 */
+
 extern const char *TAG;
 
 char configToken[10];
 
 static uint8_t is_valid_token(char* str);
 
+char *http_auth_basic(const char *username, const char *password)
+{
+    int out;
+    char *user_info = NULL;
+    char *digest = NULL;
+    size_t n = 0;
+    asprintf(&user_info, "%s:%s", username, password);
+    if (user_info) {
+		mbedtls_base64_encode(NULL, 0, &n, (const unsigned char *)user_info, strlen(user_info));
+		digest = calloc(1, 6 + n + 1);
+		strcpy(digest, "Basic ");
+		mbedtls_base64_encode((unsigned char *)digest + 6, n, (size_t *)&out, (const unsigned char *)user_info, strlen(user_info));
+		free(user_info);
+	}
+    return digest;
+}
+
+
+/* An HTTP GET handler */
+uint8_t check_authentication (httpd_req_t *req)
+{
+    char*  buf;
+    size_t buf_len;
+
+    /* Get header value string length and allocate memory for length + 1,
+     * extra byte for null termination */
+    buf_len = httpd_req_get_hdr_value_len(req, "Authorization") + 1;
+    if (buf_len > 1) {
+        buf = calloc(1, buf_len);
+        if (httpd_req_get_hdr_value_str(req, "Authorization", buf, buf_len) == ESP_OK) {
+            ESP_LOGI(TAG, "Found header => Authorization: %s", buf);
+        } else {
+            ESP_LOGE(TAG, "No auth value received");
+        }
+        
+        char *auth_credentials = http_auth_basic("admin", config.password);
+        if (strncmp(auth_credentials, buf, buf_len)) {
+            ESP_LOGE(TAG, "Not authenticated");
+            httpd_resp_set_status(req, HTTPD_401);
+            httpd_resp_set_hdr(req, "Connection", "keep-alive");
+            httpd_resp_set_hdr(req, "WWW-Authenticate", "Basic realm=\"wifiGeiger\"");
+            httpd_resp_send(req, NULL, 0);
+            free(auth_credentials);
+			free(buf);
+			return 0;
+        } else {
+            ESP_LOGI(TAG, "Authenticated!");
+            free(auth_credentials);
+			free(buf);
+			return 1;			
+        }      
+    }
+	else {
+        ESP_LOGE(TAG, "No auth header received");
+        httpd_resp_set_status(req, HTTPD_401);
+        httpd_resp_set_hdr(req, "Connection", "keep-alive");
+        httpd_resp_set_hdr(req, "WWW-Authenticate", "Basic realm=\"wifiGeiger\"");
+        httpd_resp_send(req, NULL, 0);
+        return 0;
+    }
+
+    return 0;
+}
+
+
 /* An HTTP GET handler */
 esp_err_t hello_get_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
+    
+    if (!check_authentication(req)) {return ESP_OK;}
 
     /* Get header value string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -119,6 +189,8 @@ esp_err_t reset_cgi_get_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
+    
+    if (!check_authentication(req)) {return ESP_OK;}
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -168,6 +240,8 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
     char*  buf;
     size_t buf_len;
     config_t newConfig = config;
+    
+    if (!check_authentication(req)) {return ESP_OK;}
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -356,6 +430,8 @@ esp_err_t pass_cgi_post_handler(httpd_req_t *req)
     size_t buf_len;
     char param[32];
     char resp[32] = "";
+    
+    if (!check_authentication(req)) {return ESP_OK;}
 
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -427,6 +503,9 @@ esp_err_t data_json_get_handler(httpd_req_t *req)
 esp_err_t settings_json_get_handler(httpd_req_t *req)
 {
     char *data;
+    
+    if (!check_authentication(req)) {return ESP_OK;}
+    
     data = constructSettingsJSON();
     if (data) {
         httpd_resp_set_type(req, "application/json");
@@ -441,6 +520,8 @@ esp_err_t settings_json_get_handler(httpd_req_t *req)
 esp_err_t file_get_handler(httpd_req_t *req)
 {
 	char data[512];
+	
+	if (!check_authentication(req)) {return ESP_OK;}
 	
 	ESP_LOGI(TAG, "Reading file");
 	char *ext = strchr(req->user_ctx, '.')+1;
@@ -478,6 +559,8 @@ esp_err_t sysinfo_get_handler(httpd_req_t *req)
 {
     char *data;
     cJSON *root;
+    
+    if (!check_authentication(req)) {return ESP_OK;}
 	
 	root = cJSON_CreateObject();
 	cJSON_AddNumberToObject(root, "uptime", get_uptime());
@@ -512,6 +595,8 @@ esp_err_t sysinfo_get_handler(httpd_req_t *req)
 
 
 esp_err_t token_get_handler(httpd_req_t *req) {
+	if (!check_authentication(req)) {return ESP_OK;}
+	
 	for (uint8_t i=0; i<(sizeof(configToken)-1); i++) configToken[i] = 'a'+(esp_random() % 26);
 	configToken[sizeof(configToken)-1] = '\0';
     httpd_resp_send(req, configToken, strlen(configToken));

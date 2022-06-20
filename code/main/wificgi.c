@@ -140,7 +140,7 @@ esp_err_t connect_cgi_post_handler(httpd_req_t *req)
     }
     /* Send response with custom headers and body set as the
      * string passed in user context*/
-    httpd_resp_set_hdr(req, "Location", "/ui/wifi");
+    httpd_resp_set_hdr(req, "Location", "/ui/wifi/connecting.html");
     httpd_resp_set_status(req, "301 Moved Permanently");
     httpd_resp_send(req, "", strlen(""));
 

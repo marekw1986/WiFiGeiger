@@ -20,12 +20,12 @@ function getStatus() {
 				$("#status").innerHTML="Przygotowywanie połączenia...";
 				window.setTimeout(getStatus, 1000);
 			} else if (data.status=="success") {
-				$("#status").innerHTML="Połączono! Przydzielony numer IP: "+data.ip+". Jeśli jesteś podłączony do tej samej sieci, możesz uzyskać dostęp do urządzenia klikając <a href=\"http://"+data.ip+"/\">tutaj</a>.";
+				$("#status").innerHTML="Połączono! Przydzielony numer IP: "+data.ip+". Jeśli jesteś podłączony do tej samej sieci, możesz uzyskać dostęp do urządzenia klikając <a href=\"http://"+data.ip+"/ui/index.html\">tutaj</a>.";
 			} else if (data.status=="working") {
 				$("#status").innerHTML="Łączenie z access pointem...";
 				window.setTimeout(getStatus, 1000);
 			} else if (data.status=="fail") {
-				$("#status").innerHTML="Nieudana próba połączenia. Sprawdź hasło i wybrany acces point.<br /><a href=\"wifi.tpl\">cofnij</a>";
+				$("#status").innerHTML="Nieudana próba połączenia. Sprawdź hasło i wybrany acces point.<br /><a href=\"/ui/wifi\">cofnij</a>";
 			}
 		}
 	}

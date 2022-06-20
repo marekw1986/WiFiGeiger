@@ -118,6 +118,10 @@ void mqtt_client_start(void) {
     esp_mqtt_client_start(client);
 }
 
+void mqtt_client_stop(void) {
+	esp_mqtt_client_stop(client);
+}
+
 void mqtt_timer_func (void* arg) {
 	char *data;
 	

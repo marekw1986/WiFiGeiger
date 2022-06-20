@@ -126,7 +126,9 @@ void app_main() {
     printf("Hello world!\n");
 	geiger_init();
 	  
-	wifi_init_sta();
+	//wifi_init_sta();
+	wifi_init_apsta();
+	//wifi_init_softap();
 	esp_wifi_set_ps(WIFI_PS_NONE);
     
     //First we try to set system time from I2C RTC
@@ -155,8 +157,7 @@ void app_main() {
     setenv("TZ", "GMT-1GMT-2,M3.5.0/2,M10.5.0/3", 1);
     tzset(); 
     
-    http_server_init();
-    mqtt_client_start(); 
+    http_server_init(); 
     spi_filesystem_init();
     
     xTaskCreate(i2c_task_example, "i2c_task_example", 4096, NULL, 10, NULL);

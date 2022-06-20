@@ -1,6 +1,10 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
+#include "esp_timer.h"
+
+#define millis() (uint32_t)(esp_timer_get_time()/1000)
+
 char* constructDataJSON(void);
 char* constructSettingsJSON(void);
 uint32_t get_uptime(void);

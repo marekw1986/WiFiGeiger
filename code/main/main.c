@@ -18,6 +18,7 @@
 #include "esp_system.h"
 #include "esp_spi_flash.h"
 #include "esp_wifi.h"
+#include "esp_timer.h"
 #include "common.h"
 #include "geiger.h"
 #include "ds3231.h"
@@ -28,10 +29,13 @@
 #include "config.h"
 #include "wificgi.h"
 
+#define GPIO_INPUT_BUTTON	0
 #define GPIO_INPUT_RTC		14
-#define GPIO_INPUT_PIN_SEL 	((1ULL<<GPIO_INPUT_RTC) | (1ULL<<GPIO_INPUT_CPM))
+#define GPIO_INPUT_PIN_SEL 	((1ULL<<GPIO_INPUT_RTC) | (1ULL<<GPIO_INPUT_CPM) | (1ULL<<GPIO_INPUT_BUTTON))
 
 const char *TAG = "wiFiGeiger";
+
+extern uint32_t uptime;
 
 SemaphoreHandle_t xSemaphore = NULL;
 SemaphoreHandle_t i2cSemaphore = NULL;
@@ -44,6 +48,19 @@ void gpio_isr_rtc_handler (void *arg) {
 	geiger_1s_handle();
 	xSemaphoreGiveFromISR( xSemaphore, &xHigherPriorityTaskWoken );
 	portYIELD_FROM_ISR();
+}
+
+void gpio_isr_button_handler (void *arg) {
+	static uint32_t button_timer = 0;
+	
+	if (gpio_get_level(0)) {
+		button_timer = millis();
+	}
+	else {
+		if ( (millis()-button_timer) > 1000) {
+			uptime = 0;
+		}
+	}
 }
 
 
@@ -104,10 +121,17 @@ void app_main() {
     io_conf.pull_up_en = 1;
     gpio_config(&io_conf);  
     
+    io_conf.intr_type = GPIO_INTR_ANYEDGE;
+    io_conf.pin_bit_mask = (1ULL<<GPIO_INPUT_BUTTON);
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pull_up_en = 1;
+    gpio_config(&io_conf);
+    
     //install gpio isr service
     gpio_install_isr_service(0);
     //hook isr handler for specific gpio pin
-    gpio_isr_handler_add(GPIO_INPUT_RTC, gpio_isr_rtc_handler, NULL); 
+    gpio_isr_handler_add(GPIO_INPUT_RTC, gpio_isr_rtc_handler, NULL);
+    gpio_isr_handler_add(GPIO_INPUT_BUTTON, gpio_isr_button_handler, NULL); 
     
     i2c_master_init();
     

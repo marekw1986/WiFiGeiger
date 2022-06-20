@@ -145,7 +145,10 @@ void app_main() {
     else {ESP_LOGI(TAG, "I2C semaphore taken");}
 	
 	sntp_setoperatingmode(SNTP_OPMODE_POLL);
-    sntp_setservername(0, "pool.ntp.org");
+    sntp_setservername(0, config.ntp1);
+    sntp_setservername(1, config.ntp2);
+    sntp_setservername(2, config.ntp3);
+    sntp_setservername(3, "pool.ntp.org");
     sntp_set_time_sync_notification_cb(sntp_sync_time_func);
     sntp_init();
     

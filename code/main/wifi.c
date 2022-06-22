@@ -22,6 +22,7 @@ static EventGroupHandle_t s_wifi_event_group;
 extern const char *TAG;
 
 static int s_retry_num = 0;
+conTryStatus_t connTryStatus=CONNTRY_IDLE;
 
 static void event_handler(void* arg, esp_event_base_t event_base,
                                 int32_t event_id, void* event_data)
@@ -34,10 +35,12 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 			if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
 				mqtt_client_stop();
 				esp_wifi_connect();
+                conTryStatus = CONNTRY_WORKING;
 				s_retry_num++;
 				ESP_LOGI(TAG, "retry to connect to the AP");
 			}
 			else {
+                conTryStatus = CONNTRY_FAIL;
 				xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
 			}
 			ESP_LOGI(TAG,"connect to the AP fail");
@@ -55,6 +58,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 	}
 	else if (event_base == IP_EVENT) {
 		if (event_id == IP_EVENT_STA_GOT_IP) {
+            conTryStatus = CONNTRY_SUCCESS;
 			ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
 			ESP_LOGI(TAG, "got ip:%s",
 					 ip4addr_ntoa(&event->ip_info.ip));
@@ -95,6 +99,7 @@ void wifi_init_sta(void) {
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
     ESP_ERROR_CHECK(esp_wifi_start() );
 
+    conTryStatus = CONNTRY_WORKING;
     ESP_LOGI(TAG, "wifi_init_sta finished.");
 
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
@@ -166,7 +171,8 @@ void wifi_init_apsta(void) {
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_ap_config) );
     ESP_ERROR_CHECK(esp_wifi_start() );
 
-    ESP_LOGI(TAG, "wifi_init_sta finished.");
+    conTryStatus = CONNTRY_WORKING;
+    ESP_LOGI(TAG, "wifi_init_apsta finished.");
 
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
      * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */

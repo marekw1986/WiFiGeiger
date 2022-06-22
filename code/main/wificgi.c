@@ -8,6 +8,7 @@
 #include "esp_wifi.h"
 #include "http_server.h"
 #include "cJSON.h"
+#include "wifi.h"
 #include "wificgi.h"
 
 extern const char *TAG;
@@ -19,6 +20,7 @@ static int scanInProgress = 0;
 os_timer_t scan_timer;
 
 static char* constructAPsJSON(void);
+static char* constructWiFiConJSON(void);
 static void scan_timer_func(void* param);
 
 esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
@@ -46,29 +48,19 @@ esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
 
 esp_err_t connstatus_cgi_get_handler(httpd_req_t *req)
 {
-    char*  buf;
-    size_t buf_len;
-    char resp[32] = "";
-    
-    if (!check_authentication(req)) {return ESP_OK;}
-
-    /* Read URL query string length and allocate memory for length + 1,
-     * extra byte for null termination */
-    buf_len = httpd_req_get_url_query_len(req) + 1;
-    if (buf_len > 1) {
-        buf = malloc(buf_len);
-        if (buf) {
-            if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK) {
-                ESP_LOGI(TAG, "Found URL query => %s", buf);
-            }
-            free(buf);
-        }
+	char *out;
+	
+	if (!check_authentication(req)) {return ESP_OK;}
+     
+    out = constructWiFiConJSON();
+    if (out) {
+		httpd_resp_set_type(req, "application/json");
+        httpd_resp_send(req, out, strlen(out));
+        free(out);
+        return ESP_OK;        
     }
-    /* Send response with custom headers and body set as the
-     * string passed in user context*/
-    httpd_resp_send(req, resp, strlen(resp));
-
-    return ESP_OK;
+     
+    return ESP_FAIL;
 }
 
 esp_err_t setmode_cgi_get_handler(httpd_req_t *req)
@@ -231,6 +223,43 @@ static char* constructAPsJSON(void) {
 			cJSON_AddNumberToObject(ap_object, "enc", ap_info[i].authmode);
 			cJSON_AddNumberToObject(ap_object, "channel", ap_info[i].primary);
 		}
+    }
+	out = cJSON_Print(root);
+	cJSON_Delete(root);
+    if (out == NULL) return NULL;
+	
+	return out;
+}
+
+
+static char* constructWiFiConJSON(void) {
+	cJSON *root;
+    
+    char buf[32];
+	char *out;
+	
+	root = cJSON_CreateObject();
+    if (root == NULL) return NULL;
+    switch(conTryStatus) {
+        case CONNTRY_IDLE:
+        cJSON_AddStringToObject(root, "status", "idle");
+        break;
+        
+        case CONNTRY_WORKING:
+        cJSON_AddStringToObject(root, "status", "working");
+        break;
+        
+        case CONNTRY_SUCCESS:
+        cJSON_AddStringToObject(root, "status", "success");
+        //also print IP
+        tcpip_adapter_ip_info_t ip_info;
+        tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip_info);
+        snprintf(buf, sizeof(buf)-1, IPSTR, IP2STR(&ip_info.ip));
+        break;
+        
+        default:
+        cJSON_AddStringToObject(root, "status", "fail");
+        break;
     }
 	out = cJSON_Print(root);
 	cJSON_Delete(root);

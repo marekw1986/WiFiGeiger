@@ -17,6 +17,9 @@
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT      BIT1
 
+typedef enum {CONNTRY_IDLE,  CONNTRY_WORKING, CONNTRY_SUCCESS, CONNTRY_FAIL} conTryStatus_t;
+conTryStatus_t conTryStatus;
+
 void wifi_init_sta(void);
 void wifi_init_softap(void);
 void wifi_init_apsta(void);

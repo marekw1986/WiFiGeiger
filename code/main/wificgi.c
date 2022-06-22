@@ -255,6 +255,7 @@ static char* constructWiFiConJSON(void) {
         tcpip_adapter_ip_info_t ip_info;
         tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip_info);
         snprintf(buf, sizeof(buf)-1, IPSTR, IP2STR(&ip_info.ip));
+        cJSON_AddStringToObject(root, "ip", buf);
         break;
         
         default:

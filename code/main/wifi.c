@@ -226,3 +226,28 @@ void wifi_init_softap(void) {
     ESP_LOGI(TAG, "wifi_init_softap finished. SSID:%s password:%s",
              EXAMPLE_ESP_SOFTAP_WIFI_SSID, EXAMPLE_ESP_SOFTAP_WIFI_PASS);
 }
+
+void wifi_connect_to_ap(const char* ssid, const char* password) {
+    wifi_mode_t mode;
+    wifi_config_t wifi_sta_config;
+    
+    if (esp_wifi_get_mode(&mode) != ESP_OK) return;
+    if (mode == WIFI_MODE_AP) return;
+    if (strlen(ssid) == 0) return;
+    if ( (strlen(password) > 0) && (strlen(password) < 8) ) {
+        return;
+    }    
+    if (strlen((char *)wifi_sta_config.sta.password)) {
+        wifi_sta_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
+    }
+    else {
+        wifi_sta_config.sta.threshold.authmode = WIFI_AUTH_OPEN;
+    }
+    strncpy((char*)wifi_sta_config.sta.ssid, ssid, sizeof(wifi_sta_config.sta.ssid)-1);
+    strncpy((char*)wifi_sta_config.sta.password, password, sizeof(wifi_sta_config.sta.password)-1);
+    
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
+    
+    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_sta_config) );        
+}

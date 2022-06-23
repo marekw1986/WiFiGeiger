@@ -104,6 +104,8 @@ esp_err_t connect_cgi_post_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
+    char ssid[32];
+    char password[64];
     
     if (!check_authentication(req)) {return ESP_OK;}
 
@@ -123,10 +125,23 @@ esp_err_t connect_cgi_post_handler(httpd_req_t *req)
 			char param[32];
 			if (httpd_query_key_value(buf, "essid", param, sizeof(param)) == ESP_OK) {
 				ESP_LOGI(TAG, "ESSID: %s", param);
+                strncpy(ssid, param, sizeof(ssid)-1);
 			}
+            else {
+                free(buf);
+                httpd_resp_send(req, "", strlen(""));
+                return ESP_OK;
+            }
 			if (httpd_query_key_value(buf, "passwd", param, sizeof(param)) == ESP_OK) {
 				ESP_LOGI(TAG, "Password: %s", param);
-			}			
+                strncpy(password, param, sizeof(password)-1);
+			}
+            else {
+                free(buf);
+                httpd_resp_send(req, "", strlen(""));
+                return ESP_OK;
+            }
+            wifi_connect_to_ap(ssid, password);
 			free(buf);
 		}
     }

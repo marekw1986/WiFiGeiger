@@ -23,5 +23,6 @@ conTryStatus_t conTryStatus;
 void wifi_init_sta(void);
 void wifi_init_softap(void);
 void wifi_init_apsta(void);
+void wifi_connect_to_ap(const char* ssid, const char* password);
 
 #endif //_WIFI_H_

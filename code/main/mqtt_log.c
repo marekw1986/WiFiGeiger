@@ -40,19 +40,6 @@ os_timer_t mqtt_timer;
 
 void mqtt_timer_func (void* arg);
 
-/*
-char* constructJSON(char* buf, uint16_t len) {
-	struct tm time;
-    long unsigned int timestamp = 0;
-    
-    if (ds3231_getTime(&time)) {
-		timestamp = mktime(&time);
-	}
-    snprintf(buf, len, "{\"id\":\"wifigeiger1\",\"geiger\":{\"timestamp\":%lu,\"radiation\":%.4f}}", timestamp, cpm2sievert(geiger_get_cpm()));
-    return buf;
-}
-*/
-
 
 static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
 {

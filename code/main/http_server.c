@@ -938,6 +938,13 @@ void http_server_init (void) {
     server = start_webserver();
 }
 
+void http_server_deinit(void) {
+	if (server) {
+		httpd_stop(server);	
+		server = NULL;
+	}
+}
+
 
 static uint8_t is_valid_token(char* str) {
     if (strcmp(str, configToken) != 0) return 0;

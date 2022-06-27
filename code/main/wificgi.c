@@ -7,6 +7,7 @@
 #include "esp_event.h"
 #include "esp_wifi.h"
 #include "http_server.h"
+#include "mqtt_log.h"
 #include "cJSON.h"
 #include "wifi.h"
 #include "wificgi.h"
@@ -16,12 +17,18 @@ extern const char *TAG;
 uint16_t ap_count = 0;
 wifi_ap_record_t *ap_info;
 
+char new_ssid[32];
+char new_password[64];
+
 static int scanInProgress = 0;
 os_timer_t scan_timer;
+os_timer_t connect_timer;
 
 static char* constructAPsJSON(void);
 static char* constructWiFiConJSON(void);
 static void scan_timer_func(void* param);
+static void connect_timer_func(void* param);
+static void disconnect_timer_func(void* param);
 
 esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
 {
@@ -104,8 +111,6 @@ esp_err_t connect_cgi_post_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
-    char ssid[32];
-    char password[64];
     
     if (!check_authentication(req)) {return ESP_OK;}
 
@@ -125,7 +130,7 @@ esp_err_t connect_cgi_post_handler(httpd_req_t *req)
 			char param[32];
 			if (httpd_query_key_value(buf, "essid", param, sizeof(param)) == ESP_OK) {
 				ESP_LOGI(TAG, "ESSID: %s", param);
-                strncpy(ssid, param, sizeof(ssid)-1);
+                strncpy(new_ssid, param, sizeof(new_ssid)-1);
 			}
             else {
                 free(buf);
@@ -134,14 +139,18 @@ esp_err_t connect_cgi_post_handler(httpd_req_t *req)
             }
 			if (httpd_query_key_value(buf, "passwd", param, sizeof(param)) == ESP_OK) {
 				ESP_LOGI(TAG, "Password: %s", param);
-                strncpy(password, param, sizeof(password)-1);
+                strncpy(new_password, param, sizeof(new_password)-1);
 			}
             else {
                 free(buf);
                 httpd_resp_send(req, "", strlen(""));
                 return ESP_OK;
             }
-            wifi_connect_to_ap(ssid, password);
+			os_timer_disarm(&connect_timer);
+			os_timer_setfn(&connect_timer, disconnect_timer_func, NULL);
+			os_timer_arm(&connect_timer, 500, 0);	            
+            //wifi_disconnect_sta();
+            //wifi_connect_sta(ssid, password);
 			free(buf);
 		}
     }
@@ -302,4 +311,20 @@ static void scan_timer_func(void* param) {
 	}
 	esp_wifi_scan_start(&scan_config, false);
 	scanInProgress = 1;	
+}
+
+static void disconnect_timer_func(void* param) {
+	ESP_LOGI(TAG, "Disconnecting from AP");
+	http_server_deinit();
+	mqtt_client_stop();
+	//wifi_disconnect_sta();
+	ESP_ERROR_CHECK(esp_wifi_disconnect());
+	os_timer_disarm(&connect_timer);
+	os_timer_setfn(&connect_timer, connect_timer_func, NULL);
+	os_timer_arm(&connect_timer, 500, 0);	
+}
+
+static void connect_timer_func(void* param) {
+	ESP_LOGI(TAG, "Connecting to AP %s, password is %s", new_ssid, new_password);
+	wifi_connect_sta(new_ssid, new_password);
 }

@@ -150,6 +150,7 @@ void app_main() {
     printf("Hello world!\n");
 	geiger_init();
 	  
+	//wifi_init();
 	//wifi_init_sta();
 	wifi_init_apsta();
 	//wifi_init_softap();

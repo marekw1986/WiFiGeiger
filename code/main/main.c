@@ -37,9 +37,16 @@ const char *TAG = "wiFiGeiger";
 
 extern uint32_t uptime;
 
+static os_timer_t soft_ap_restore_timer;
+
 SemaphoreHandle_t xSemaphore = NULL;
 SemaphoreHandle_t i2cSemaphore = NULL;
 
+static void soft_ap_restore_timer_func(void* param) {
+	ESP_LOGI(TAG, "Restoring Soft AP as operation mode");
+	wifi_init_softap();
+	esp_restart();
+}
 
 void gpio_isr_rtc_handler (void *arg) {
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
@@ -53,12 +60,14 @@ void gpio_isr_rtc_handler (void *arg) {
 void gpio_isr_button_handler (void *arg) {
 	static uint32_t button_timer = 0;
 	
-	if (gpio_get_level(0)) {
-		button_timer = millis();
+	if (!gpio_get_level(0)) {
+		button_timer = get_uptime();
 	}
 	else {
-		if ( (millis()-button_timer) > 1000) {
-			uptime = 0;
+		if ( (uint32_t)(get_uptime()-button_timer) > 10) {
+			os_timer_disarm(&soft_ap_restore_timer);
+			os_timer_setfn(&soft_ap_restore_timer, soft_ap_restore_timer_func, NULL);
+			os_timer_arm(&soft_ap_restore_timer, 100, 0);	
 		}
 	}
 }
@@ -150,9 +159,9 @@ void app_main() {
     printf("Hello world!\n");
 	geiger_init();
 	  
-	//wifi_init();
+	wifi_init();
 	//wifi_init_sta();
-	wifi_init_apsta();
+	//wifi_init_apsta();
 	//wifi_init_softap();
 	esp_wifi_set_ps(WIFI_PS_NONE);
     

@@ -106,7 +106,9 @@ void mqtt_client_start(void) {
 }
 
 void mqtt_client_stop(void) {
-	esp_mqtt_client_stop(client);
+	if (client) {
+		esp_mqtt_client_stop(client);
+	}
 }
 
 void mqtt_timer_func (void* arg) {

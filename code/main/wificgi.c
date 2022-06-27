@@ -28,7 +28,6 @@ static char* constructAPsJSON(void);
 static char* constructWiFiConJSON(void);
 static void scan_timer_func(void* param);
 static void connect_timer_func(void* param);
-static void disconnect_timer_func(void* param);
 
 esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
 {
@@ -41,11 +40,14 @@ esp_err_t wifiscan_cgi_get_handler(httpd_req_t *req)
 		httpd_resp_set_type(req, "application/json");
         httpd_resp_send(req, out, strlen(out));
         free(out);
-        if (!scanInProgress) {
-			os_timer_disarm(&scan_timer);
-			os_timer_setfn(&scan_timer, scan_timer_func, NULL);
-			os_timer_arm(&scan_timer, 500, 0);	
-        }
+        wifi_mode_t mode;
+        if (esp_wifi_get_mode(&mode) == ESP_OK) {
+			if (( (mode == WIFI_MODE_STA) || (mode == WIFI_MODE_APSTA) ) && !scanInProgress) {
+				os_timer_disarm(&scan_timer);
+				os_timer_setfn(&scan_timer, scan_timer_func, NULL);
+				os_timer_arm(&scan_timer, 500, 0);	
+			}
+		}
         return ESP_OK;        
     }
      
@@ -147,7 +149,7 @@ esp_err_t connect_cgi_post_handler(httpd_req_t *req)
                 return ESP_OK;
             }
 			os_timer_disarm(&connect_timer);
-			os_timer_setfn(&connect_timer, disconnect_timer_func, NULL);
+			os_timer_setfn(&connect_timer, connect_timer_func, NULL);
 			os_timer_arm(&connect_timer, 500, 0);	            
             //wifi_disconnect_sta();
             //wifi_connect_sta(ssid, password);
@@ -313,18 +315,8 @@ static void scan_timer_func(void* param) {
 	scanInProgress = 1;	
 }
 
-static void disconnect_timer_func(void* param) {
-	ESP_LOGI(TAG, "Disconnecting from AP");
-	http_server_deinit();
-	mqtt_client_stop();
-	//wifi_disconnect_sta();
-	ESP_ERROR_CHECK(esp_wifi_disconnect());
-	os_timer_disarm(&connect_timer);
-	os_timer_setfn(&connect_timer, connect_timer_func, NULL);
-	os_timer_arm(&connect_timer, 500, 0);	
-}
-
 static void connect_timer_func(void* param) {
 	ESP_LOGI(TAG, "Connecting to AP %s, password is %s", new_ssid, new_password);
 	wifi_connect_sta(new_ssid, new_password);
+	esp_restart();
 }

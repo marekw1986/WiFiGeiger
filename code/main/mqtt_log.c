@@ -39,6 +39,8 @@ esp_mqtt_client_handle_t client;
 os_timer_t mqtt_timer;
 
 void mqtt_timer_func (void* arg);
+static void connect_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
+static void disconnect_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
 
 
 static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
@@ -99,10 +101,10 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 }
 
 
-void mqtt_client_start(void) {
+void mqtt_client_init(void) {
 	client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, client);
-    esp_mqtt_client_start(client);
+	ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &client));
 }
 
 void mqtt_client_stop(void) {
@@ -121,3 +123,17 @@ void mqtt_timer_func (void* arg) {
     }
 }
 
+static void disconnect_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
+{
+	ESP_LOGI(TAG, "MQTT disconnect handler (STA lost connection with AP)");
+	ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler));
+	os_timer_disarm(&mqtt_timer);
+	esp_mqtt_client_stop(client);
+}
+
+static void connect_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
+{
+	ESP_LOGI(TAG, "MQTT connect handler (GOT IP)");
+	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &client));
+	esp_mqtt_client_start(client);
+}

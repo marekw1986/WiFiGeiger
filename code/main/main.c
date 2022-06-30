@@ -93,8 +93,8 @@ void i2c_task_example(void *arg) {
 		
 		time(&now);
 		localtime_r(&now, &timeinfo);	
-		printf("Sivert: %f, CPM: %d\r\n", cpm2sievert(geiger_get_cpm()), geiger_get_cpm());
-		printf(asctime(&timeinfo));
+		//printf("Sivert: %f, CPM: %d\r\n", cpm2sievert(geiger_get_cpm()), geiger_get_cpm());
+		//printf(asctime(&timeinfo));
 		//vTaskDelay(1000 / portTICK_RATE_MS);
 		
     }
@@ -191,7 +191,8 @@ void app_main() {
     setenv("TZ", "GMT-1GMT-2,M3.5.0/2,M10.5.0/3", 1);
     tzset(); 
     
-    http_server_init(); 
+    http_server_init();
+    mqtt_client_init();
     spi_filesystem_init();
     
     xTaskCreate(i2c_task_example, "i2c_task_example", 4096, NULL, 10, NULL);

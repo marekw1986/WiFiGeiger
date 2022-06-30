@@ -69,27 +69,26 @@ uint8_t check_authentication (httpd_req_t *req)
     if (buf_len > 1) {
         buf = calloc(1, buf_len);
         if (httpd_req_get_hdr_value_str(req, "Authorization", buf, buf_len) == ESP_OK) {
-            ESP_LOGI(TAG, "Found header => Authorization: %s", buf);
+            //ESP_LOGI(TAG, "Found header => Authorization: %s", buf);
+			char *auth_credentials = http_auth_basic("admin", config.password);
+			if (strncmp(auth_credentials, buf, buf_len)) {
+				ESP_LOGE(TAG, "Not authenticated");
+				httpd_resp_set_status(req, HTTPD_401);
+				httpd_resp_set_hdr(req, "Connection", "keep-alive");
+				httpd_resp_set_hdr(req, "WWW-Authenticate", "Basic realm=\"wifiGeiger\"");
+				httpd_resp_send(req, NULL, 0);
+				free(auth_credentials);
+				free(buf);
+				return 0;
+			} else {
+				//ESP_LOGI(TAG, "Authenticated!");
+				free(auth_credentials);
+				free(buf);
+				return 1;			
+			} 
         } else {
             ESP_LOGE(TAG, "No auth value received");
-        }
-        
-        char *auth_credentials = http_auth_basic("admin", config.password);
-        if (strncmp(auth_credentials, buf, buf_len)) {
-            ESP_LOGE(TAG, "Not authenticated");
-            httpd_resp_set_status(req, HTTPD_401);
-            httpd_resp_set_hdr(req, "Connection", "keep-alive");
-            httpd_resp_set_hdr(req, "WWW-Authenticate", "Basic realm=\"wifiGeiger\"");
-            httpd_resp_send(req, NULL, 0);
-            free(auth_credentials);
-			free(buf);
-			return 0;
-        } else {
-            ESP_LOGI(TAG, "Authenticated!");
-            free(auth_credentials);
-			free(buf);
-			return 1;			
-        }      
+        }     
     }
 	else {
         ESP_LOGE(TAG, "No auth header received");
@@ -199,11 +198,11 @@ esp_err_t reset_cgi_get_handler(httpd_req_t *req)
         buf = malloc(buf_len);
         if (buf) {
             if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK) {
-                ESP_LOGI(TAG, "Found URL query => %s", buf);
+                //ESP_LOGI(TAG, "Found URL query => %s", buf);
                 char param[32];
                 /* Get value of expected key from query string */
                 if (httpd_query_key_value(buf, "token", param, sizeof(param)) == ESP_OK) {
-                    ESP_LOGI(TAG, "Found URL query parameter => token=%s", param);
+                    //ESP_LOGI(TAG, "Found URL query parameter => token=%s", param);
                     if (!is_valid_token(param)) {
                         httpd_resp_send(req, INVALID_TOKEN_STR, strlen(INVALID_TOKEN_STR));
                         free(buf);
@@ -255,7 +254,6 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
 				return ESP_FAIL;
 			}
 			buf[ret] = '\0';
-			ESP_LOGI(TAG, "Found POST data => %s", buf);
             char param[32];
             if (httpd_query_key_value(buf, "token", param, sizeof(param)) == ESP_OK) {
                 if (!is_valid_token(param)) {
@@ -445,9 +443,7 @@ esp_err_t pass_cgi_post_handler(httpd_req_t *req)
 				return ESP_FAIL;
 			}
 			buf[ret] = '\0';
-			ESP_LOGI(TAG, "Found POST data => %s", buf);
 			if (httpd_query_key_value(buf, "token", param, sizeof(param)) == ESP_OK) {
-				ESP_LOGI(TAG, "Token: %s", param);
 				if (strcmp(param, configToken) == 0) {
 					if (httpd_query_key_value(buf, "oldpass", param, sizeof(param)) == ESP_OK) {
 						if (param[0] == '\0') {
@@ -523,7 +519,6 @@ esp_err_t file_get_handler(httpd_req_t *req)
 	
 	if (!check_authentication(req)) {return ESP_OK;}
 	
-	ESP_LOGI(TAG, "Reading file");
 	char *ext = strchr(req->user_ctx, '.')+1;
 	if (ext) {
 		if (strcmp(ext, "js") == 0) {

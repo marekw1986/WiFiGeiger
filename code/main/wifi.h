@@ -20,6 +20,8 @@
 typedef enum {CONNTRY_IDLE,  CONNTRY_WORKING, CONNTRY_SUCCESS, CONNTRY_FAIL} conTryStatus_t;
 conTryStatus_t conTryStatus;
 
+uint8_t sta_reconnect;
+
 void wifi_init(void);
 void wifi_init_sta(void);
 void wifi_init_softap(void);

@@ -22,7 +22,7 @@ static EventGroupHandle_t s_wifi_event_group;
 extern const char *TAG;
 
 static int s_retry_num = 0;
-static uint8_t sta_reconnect = 1;
+uint8_t sta_reconnect = 1;
 conTryStatus_t connTryStatus=CONNTRY_IDLE;
 
 static void event_handler(void* arg, esp_event_base_t event_base,
@@ -33,7 +33,6 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 			esp_wifi_connect();
 		}
 		else if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
-			mqtt_client_stop();
 			if (sta_reconnect && (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) ) {
 				esp_wifi_connect();
                 conTryStatus = CONNTRY_WORKING;
@@ -64,7 +63,6 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 			ESP_LOGI(TAG, "got ip:%s",
 					 ip4addr_ntoa(&event->ip_info.ip));
 			s_retry_num = 0;
-			mqtt_client_start();
 			xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
 		}
 	}    

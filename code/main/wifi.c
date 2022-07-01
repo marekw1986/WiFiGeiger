@@ -31,6 +31,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 	if (event_base == WIFI_EVENT) {
 		if (event_id == WIFI_EVENT_STA_START) {
 			esp_wifi_connect();
+            sta_reconnect = 1;
 		}
 		else if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
 			if (sta_reconnect && (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) ) {
@@ -250,8 +251,6 @@ void wifi_connect_to_ap(const char* ssid, const char* password) {
     if ( (strlen(password) > 0) && (strlen(password) < 8) ) {
         return;
     } 
-    
-    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_sta_config) );
        
     if (strlen((char *)wifi_sta_config.sta.password)) {
         wifi_sta_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
@@ -262,9 +261,7 @@ void wifi_connect_to_ap(const char* ssid, const char* password) {
     strncpy((char*)wifi_sta_config.sta.ssid, ssid, sizeof(wifi_sta_config.sta.ssid)-1);
     strncpy((char*)wifi_sta_config.sta.password, password, sizeof(wifi_sta_config.sta.password)-1);
     
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
-    
+    sta_reconnect = 0;
     ESP_ERROR_CHECK(esp_wifi_stop() );
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_sta_config) );
     ESP_ERROR_CHECK(esp_wifi_start() );        

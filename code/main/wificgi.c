@@ -12,7 +12,7 @@
 #include "wifi.h"
 #include "wificgi.h"
 
-extern const char *TAG;
+static const char *TAG = "HTTPD-WiFiCGI";
 
 uint16_t ap_count = 0;
 wifi_ap_record_t *ap_info;
@@ -317,6 +317,7 @@ static void scan_timer_func(void* param) {
 
 static void connect_timer_func(void* param) {
 	ESP_LOGI(TAG, "Connecting to AP %s, password is %s", new_ssid, new_password);
-	wifi_connect_sta(new_ssid, new_password);
-	esp_restart();
+	wifi_connect_to_ap(new_ssid, new_password);
+	//wifi_connect_sta(new_ssid, new_password);
+	//esp_restart();
 }

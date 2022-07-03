@@ -33,7 +33,7 @@
 
 #define HTTPD_401      "401 UNAUTHORIZED"           /*!< HTTP Response 401 */
 
-extern const char *TAG;
+static const char *TAG = "HTTPD";
 
 char configToken[10];
 

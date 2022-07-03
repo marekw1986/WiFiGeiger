@@ -28,7 +28,7 @@
 #include "ds3231.h"
 
 
-extern const char *TAG;
+static const char *TAG = "MQTT log";
 
 esp_mqtt_client_config_t mqtt_cfg = {
 	.uri = "mqtt://192.168.1.105:1883",

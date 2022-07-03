@@ -19,7 +19,7 @@
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
 
-extern const char *TAG;
+static const char *TAG = "WiFi driver";
 
 static int s_retry_num = 0;
 uint8_t sta_reconnect = 1;
@@ -32,18 +32,20 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 		if (event_id == WIFI_EVENT_STA_START) {
 			esp_wifi_connect();
             sta_reconnect = 1;
+            s_retry_num = 0;
 		}
 		else if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
-			if (sta_reconnect && (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) ) {
-				esp_wifi_connect();
-                conTryStatus = CONNTRY_WORKING;
-				s_retry_num++;
-				ESP_LOGI(TAG, "retry to connect to the AP");
-			}
-			else {
-                conTryStatus = CONNTRY_FAIL;
-				xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
-				ESP_LOGI(TAG,"connect to the AP fail");
+			if (sta_reconnect) {
+				if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY)  {
+					esp_wifi_connect();
+					conTryStatus = CONNTRY_WORKING;
+					s_retry_num++;
+					ESP_LOGI(TAG, "retry to connect to the AP");
+				}
+				else {
+					conTryStatus = CONNTRY_FAIL;
+					ESP_LOGI(TAG,"connect to the AP fail");
+				}
 			}
 		}
 		else if (event_id == WIFI_EVENT_AP_STACONNECTED) {
@@ -64,7 +66,6 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 			ESP_LOGI(TAG, "got ip:%s",
 					 ip4addr_ntoa(&event->ip_info.ip));
 			s_retry_num = 0;
-			xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
 		}
 	}    
 }
@@ -242,7 +243,13 @@ void wifi_init_softap(void) {
 
 void wifi_connect_to_ap(const char* ssid, const char* password) {
     wifi_mode_t mode;
-    wifi_config_t wifi_sta_config;
+    
+	wifi_config_t wifi_sta_config = {
+        .sta = {
+            .ssid = EXAMPLE_ESP_WIFI_SSID,
+            .password = EXAMPLE_ESP_WIFI_PASS
+        },
+    };
     
     if (esp_wifi_get_mode(&mode) != ESP_OK) return;
     if (mode == WIFI_MODE_AP) return;
@@ -251,15 +258,15 @@ void wifi_connect_to_ap(const char* ssid, const char* password) {
     if ( (strlen(password) > 0) && (strlen(password) < 8) ) {
         return;
     } 
-       
+
+    strncpy((char*)wifi_sta_config.sta.ssid, ssid, sizeof(wifi_sta_config.sta.ssid)-1);
+    strncpy((char*)wifi_sta_config.sta.password, password, sizeof(wifi_sta_config.sta.password)-1);       
     if (strlen((char *)wifi_sta_config.sta.password)) {
         wifi_sta_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
     }
     else {
         wifi_sta_config.sta.threshold.authmode = WIFI_AUTH_OPEN;
     }
-    strncpy((char*)wifi_sta_config.sta.ssid, ssid, sizeof(wifi_sta_config.sta.ssid)-1);
-    strncpy((char*)wifi_sta_config.sta.password, password, sizeof(wifi_sta_config.sta.password)-1);
     
     sta_reconnect = 0;
     ESP_ERROR_CHECK(esp_wifi_stop() );

@@ -27,6 +27,7 @@ void wifi_init_sta(void);
 void wifi_init_softap(void);
 void wifi_init_apsta(void);
 esp_err_t wifi_connect_sta(char * ssid, char * password);
+void wifi_connect_to_ap(const char* ssid, const char* password);
 void wifi_disconnect_sta(void);
 
 #endif //_WIFI_H_

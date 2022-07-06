@@ -108,9 +108,9 @@ void mqtt_client_init(void) {
 }
 
 void mqtt_client_stop(void) {
-	if (client) {
-		esp_mqtt_client_stop(client);
-	}
+	ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler));
+	os_timer_disarm(&mqtt_timer);
+	esp_mqtt_client_stop(client);
 }
 
 void mqtt_timer_func (void* arg) {

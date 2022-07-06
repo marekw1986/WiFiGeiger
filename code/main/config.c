@@ -2,6 +2,7 @@
 #include <string.h>
 #include "lwip/apps/sntp.h"
 #include "config.h"
+#include "mqtt_log.h"
 
 extern SemaphoreHandle_t configSemaphore;
 
@@ -29,6 +30,7 @@ void ICACHE_FLASH_ATTR config_load_defaults (void) {
 }
 
 void config_apply_settings (void) {
+	mqtt_client_stop();
     tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA);
 	if (config.use_dhcp) {
 		tcpip_adapter_dhcpc_start(TCPIP_ADAPTER_IF_STA);

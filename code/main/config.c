@@ -3,23 +3,29 @@
 #include "lwip/apps/sntp.h"
 #include "config.h"
 
-config_t config;
+extern SemaphoreHandle_t configSemaphore;
+
+static config_t config;
 
 void ICACHE_FLASH_ATTR config_load_defaults (void) {
-	IP4_ADDR(&(config.ip), 192, 168, 1, 42);
-	IP4_ADDR(&(config.netmask), 255, 255, 255, 0);
-	IP4_ADDR(&(config.gw), 192, 168, 1, 1);
-	IP4_ADDR(&(config.dns1), 8, 8, 8, 8);
-	IP4_ADDR(&(config.dns2), 8, 8, 4, 4);
-	config.use_dhcp = 1;
-	strcpy(config.ntp1, "ntp1.tp.pl");
-	strcpy(config.ntp2, "ntp2.tp.pl");
-	strcpy(config.ntp3, "ntp.nask.pl");
-	strcpy(config.mqtt_server, "192.168.1.95");
-	strcpy(config.mqtt_topic, "testTopic");
-	strcpy(config.password, "s3cr3t");
-	config.timezone = 2;
-	config.daylight = 0;
+	
+	if (xSemaphoreTake(configSemaphore, portMAX_DELAY) == pdTRUE) {
+		IP4_ADDR(&(config.ip), 192, 168, 1, 42);
+		IP4_ADDR(&(config.netmask), 255, 255, 255, 0);
+		IP4_ADDR(&(config.gw), 192, 168, 1, 1);
+		IP4_ADDR(&(config.dns1), 8, 8, 8, 8);
+		IP4_ADDR(&(config.dns2), 8, 8, 4, 4);
+		config.use_dhcp = 1;
+		strcpy(config.ntp1, "ntp1.tp.pl");
+		strcpy(config.ntp2, "ntp2.tp.pl");
+		strcpy(config.ntp3, "ntp.nask.pl");
+		strcpy(config.mqtt_server, "192.168.1.95");
+		strcpy(config.mqtt_topic, "testTopic");
+		strcpy(config.password, "s3cr3t");
+		config.timezone = 2;
+		config.daylight = 0;
+		xSemaphoreGive(configSemaphore);
+	}
 }
 
 void config_apply_settings (void) {
@@ -46,11 +52,20 @@ void config_apply_settings (void) {
 esp_err_t config_save_settings_to_flash (void) {
 	nvs_handle_t my_handle;
     esp_err_t err;
+    config_t tmp_config;
     
     err = nvs_open("storage", NVS_READWRITE, &my_handle);
     if (err != ESP_OK) return err;
     
-    err = nvs_set_blob(my_handle, "config", &config, sizeof(config));
+    if (xSemaphoreTake(configSemaphore, portMAX_DELAY) == pdTRUE) {
+		tmp_config = config;
+		xSemaphoreGive(configSemaphore);
+	}
+	else {
+		return ESP_FAIL;
+	}    
+    
+    err = nvs_set_blob(my_handle, "config", &tmp_config, sizeof(tmp_config));
 	if (err != ESP_OK) return err;
 	
 	err = nvs_commit(my_handle);
@@ -63,13 +78,45 @@ esp_err_t config_save_settings_to_flash (void) {
 esp_err_t config_load_settings_from_flash (void) {
 	nvs_handle_t my_handle;
     esp_err_t err;
+    config_t tmp_config;
     
     err = nvs_open("storage", NVS_READWRITE, &my_handle);
     if (err != ESP_OK) return err;
     
-    size_t required_size = sizeof(config);
-    nvs_get_blob(my_handle, "config", &config, &required_size);
+    size_t required_size = sizeof(tmp_config);
+    err = nvs_get_blob(my_handle, "config", &tmp_config, &required_size);
     if (err != ESP_OK) return err;
+    
+    if (xSemaphoreTake(configSemaphore, portMAX_DELAY) == pdTRUE) {
+		config = tmp_config;
+		xSemaphoreGive(configSemaphore);
+	}
+	else {
+		return ESP_FAIL;
+	}
 	
 	return ESP_OK;
+}
+
+esp_err_t config_get_current(config_t* out) {
+	if (xSemaphoreTake(configSemaphore, portMAX_DELAY) == pdTRUE) {
+		*out = config;
+		xSemaphoreGive(configSemaphore);
+		return ESP_OK;
+	}
+	else {
+		return ESP_FAIL;
+	}
+}
+
+
+esp_err_t config_set_new(const config_t in) {
+	if (xSemaphoreTake(configSemaphore, portMAX_DELAY) == pdTRUE) {
+		config = in;
+		xSemaphoreGive(configSemaphore);
+		return ESP_OK;
+	}
+	else {
+		return ESP_FAIL;
+	}
 }

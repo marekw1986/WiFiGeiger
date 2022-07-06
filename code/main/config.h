@@ -26,12 +26,13 @@ typedef struct {
 	uint8_t daylight; 
 } config_t;
 
-config_t config;
-
 void config_load_defaults (void);
 void config_apply_settings (void);
 esp_err_t config_save_settings_to_flash (void);
 esp_err_t config_load_settings_from_flash (void);
-void sntp_sync_time_func(struct timeval *tv);
+esp_err_t config_get_current(config_t* out);
+esp_err_t config_set_new(const config_t in);
+
+
 
 #endif

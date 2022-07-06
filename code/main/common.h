@@ -13,5 +13,6 @@ void spi_filesystem_init(void);
 void set_reset_timer (void);
 uint8_t is_password_valid(const char* pass);
 uint8_t is_valid_ip_address(const char *ip);
+void sntp_sync_time_func(struct timeval *tv);
 
 #endif //_COMMON_H_

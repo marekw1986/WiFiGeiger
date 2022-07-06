@@ -68,6 +68,10 @@ char* constructSettingsJSON(void) {
 	char *out;
 	char buff[32];
 	
+	config_t config;
+	
+	if (config_get_current(&config) == ESP_FAIL) return NULL;
+	
 	root = cJSON_CreateObject();
     if (root == NULL) return NULL;
 	cJSON_AddBoolToObject(root, "dhcp", config.use_dhcp);
@@ -143,6 +147,10 @@ void set_reset_timer (void) {
 }
 
 uint8_t is_password_valid(const char* pass) {
+	config_t config;
+	
+	if (config_get_current(&config) == ESP_FAIL) return 0;	
+	
     if (pass[0] == '\0') return 0;
     if ( strlen(pass) > (sizeof(config.password)-1) ) return 0;
     return 1;

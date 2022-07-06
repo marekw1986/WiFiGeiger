@@ -62,6 +62,10 @@ uint8_t check_authentication (httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
+    
+	config_t config;
+	
+	if (config_get_current(&config) == ESP_FAIL) return 0;    
 
     /* Get header value string length and allocate memory for length + 1,
      * extra byte for null termination */
@@ -238,7 +242,9 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
 {
     char*  buf;
     size_t buf_len;
-    config_t newConfig = config;
+    config_t newConfig;
+	
+	if (config_get_current(&newConfig) == ESP_FAIL) return ESP_FAIL;    
     
     if (!check_authentication(req)) {return ESP_OK;}
 
@@ -400,7 +406,7 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
                     
                     //we parsed all received commands
                     //now save to flash
-                    config=newConfig;
+                    config_set_new(newConfig);
                     config_save_settings_to_flash();
                     httpd_resp_send(req, OK_STR, strlen(OK_STR));
                     free(buf);
@@ -428,6 +434,9 @@ esp_err_t pass_cgi_post_handler(httpd_req_t *req)
     size_t buf_len;
     char param[32];
     char resp[32] = "";
+    
+    config_t config;
+	if (config_get_current(&config) == ESP_FAIL) return ESP_FAIL;
     
     if (!check_authentication(req)) {return ESP_OK;}
 
@@ -459,6 +468,7 @@ esp_err_t pass_cgi_post_handler(httpd_req_t *req)
 								}
 								else {
 									snprintf(config.password, sizeof(config.password), "%s", param);
+									config_set_new(config);
 									config_save_settings_to_flash();
 									strncpy(resp, "ok", sizeof(resp)-1);
 								}

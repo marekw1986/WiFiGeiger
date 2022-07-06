@@ -41,6 +41,7 @@ static os_timer_t soft_ap_restore_timer;
 
 SemaphoreHandle_t xSemaphore = NULL;
 SemaphoreHandle_t i2cSemaphore = NULL;
+SemaphoreHandle_t configSemaphore = NULL;
 
 static void soft_ap_restore_timer_func(void* param) {
 	ESP_LOGI(TAG, "Restoring Soft AP as operation mode");
@@ -110,6 +111,11 @@ void app_main() {
         err = nvs_flash_init();
     }
     ESP_ERROR_CHECK( err );
+    
+    configSemaphore = xSemaphoreCreateBinary();
+	if( configSemaphore == NULL ) while(1);
+	xSemaphoreGive(configSemaphore);
+	    
     //config_load_defaults();
     //err = config_save_settings_to_flash();
     //if (err != ESP_OK) printf("Error (%s) saving settings to NVS!\n", esp_err_to_name(err));
@@ -150,7 +156,7 @@ void app_main() {
 	if( xSemaphore == NULL ) while(1);    
 	i2cSemaphore = xSemaphoreCreateBinary();
 	if( i2cSemaphore == NULL ) while(1);
-	xSemaphoreGive(i2cSemaphore);
+	xSemaphoreGive(i2cSemaphore);	
 	
 	esp_event_loop_create_default();
     esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_SCAN_DONE, scan_end_event, NULL);    
@@ -178,6 +184,10 @@ void app_main() {
         }
     }
     else {ESP_LOGI(TAG, "I2C semaphore taken");}
+    
+    {
+    config_t config;
+	config_get_current(&config);
 	
 	sntp_setoperatingmode(SNTP_OPMODE_POLL);
     sntp_setservername(0, config.ntp1);
@@ -186,6 +196,7 @@ void app_main() {
     sntp_setservername(3, "pool.ntp.org");
     sntp_set_time_sync_notification_cb(sntp_sync_time_func);
     sntp_init();
+	}
     
     setenv("TZ", "GMT-1GMT-2,M3.5.0/2,M10.5.0/3", 1);
     tzset(); 

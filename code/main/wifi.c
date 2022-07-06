@@ -66,7 +66,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 			ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
 			ESP_LOGI(TAG, "got ip:%s",
 					 ip4addr_ntoa(&event->ip_info.ip));
-                     
+                    
             if (!config.use_dhcp) {
                 tcpip_adapter_dhcp_status_t dhcp_status;
                 if ( (tcpip_adapter_dhcpc_get_status(TCPIP_ADAPTER_IF_STA, &dhcp_status) == ESP_OK) && (dhcp_status == TCPIP_ADAPTER_DHCP_STARTED) ) {
@@ -78,6 +78,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
                     tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_STA, &ip_info);
                 }
             }
+            
 			s_retry_num = 0;
 		}
 	}    

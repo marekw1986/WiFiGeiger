@@ -142,7 +142,7 @@ void set_reset_timer (void) {
 	os_timer_arm(&reset_timer, 1000, 0);	
 }
 
-uint8_t is_password_valid(char* pass) {
+uint8_t is_password_valid(const char* pass) {
     if (pass[0] == '\0') return 0;
     if ( strlen(pass) > (sizeof(config.password)-1) ) return 0;
     return 1;
@@ -156,12 +156,17 @@ static uint8_t validate_number(char *str) {
     return 1;
 }
 
-uint8_t is_valid_ip_address(char *ip) {
+/*FIX THIS - replace with strtok_r*/
+uint8_t is_valid_ip_address(const char *ip) {
     int num, dots = 0;
+    char tmpstr[16];
     char *ptr;
+    
     if (ip == NULL) { return 0; }
-        ptr = strtok(ip, ".");
-        if (ptr == NULL) { return 0; }
+    if ( strlen(ip) > (sizeof(tmpstr)-1) ) {return 0;}
+    strncpy(tmpstr, ip, sizeof(tmpstr)-1);
+	ptr = strtok(tmpstr, ".");
+	if (ptr == NULL) { return 0; }
     while (ptr) {
         if (!validate_number(ptr)) { return 0; }
         num = atoi(ptr);

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include "lwip/apps/sntp.h"
 #include "config.h"
 
 config_t config;
@@ -22,22 +23,24 @@ void ICACHE_FLASH_ATTR config_load_defaults (void) {
 }
 
 void config_apply_settings (void) {
+    tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA);
 	if (config.use_dhcp) {
-		//wifi_station_dhcpc_start();
+		tcpip_adapter_dhcpc_start(TCPIP_ADAPTER_IF_STA);
 	}
 	else {
-		//wifi_station_dhcpc_stop();
-		//wifi_set_ip_info(STATION_IF, &(config.station_ip));
-		//espconn_dns_setserver(0, &(config.dns1));
-		//espconn_dns_setserver(1, &(config.dns2));
+		tcpip_adapter_ip_info_t ip_info;
+        ip_info.ip.addr = config.ip.addr;
+        ip_info.gw.addr = config.gw.addr;
+        ip_info.netmask.addr = config.netmask.addr;
+        tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_STA, &ip_info);
 	}
 	
-	//sntp_stop();
-	//sntp_setservername(0, config.ntp1);
-	//sntp_setservername(1, config.ntp2);
-	//sntp_setservername(2, config.ntp3);
+	sntp_stop();
+    sntp_setservername(0, config.ntp1);
+    sntp_setservername(1, config.ntp2);
+    sntp_setservername(2, config.ntp3);
 	//sntp_set_timezone(config.timezone);
-	//sntp_init();	
+	sntp_init();	
 }
 
 esp_err_t config_save_settings_to_flash (void) {

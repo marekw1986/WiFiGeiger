@@ -45,7 +45,6 @@ SemaphoreHandle_t i2cSemaphore = NULL;
 static void soft_ap_restore_timer_func(void* param) {
 	ESP_LOGI(TAG, "Restoring Soft AP as operation mode");
 	wifi_init_softap();
-	esp_restart();
 }
 
 void gpio_isr_rtc_handler (void *arg) {
@@ -64,10 +63,10 @@ void gpio_isr_button_handler (void *arg) {
 		button_timer = get_uptime();
 	}
 	else {
-		if ( (uint32_t)(get_uptime()-button_timer) > 10) {
+		if ( (uint32_t)(get_uptime()-button_timer) > 4) {
 			os_timer_disarm(&soft_ap_restore_timer);
 			os_timer_setfn(&soft_ap_restore_timer, soft_ap_restore_timer_func, NULL);
-			os_timer_arm(&soft_ap_restore_timer, 100, 0);	
+			os_timer_arm(&soft_ap_restore_timer, 500, 0);	
 		}
 	}
 }

@@ -245,10 +245,11 @@ void wifi_init_softap(void) {
         wifi_config.ap.authmode = WIFI_AUTH_OPEN;
     }
 
+	sta_reconnect = 0;
+	ESP_ERROR_CHECK(esp_wifi_stop());
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
-//    ESP_ERROR_CHECK(esp_wifi_start());
-	sta_reconnect = 0;
+    ESP_ERROR_CHECK(esp_wifi_start());
 
     ESP_LOGI(TAG, "wifi_init_softap finished. SSID:%s password:%s",
              EXAMPLE_ESP_SOFTAP_WIFI_SSID, EXAMPLE_ESP_SOFTAP_WIFI_PASS);

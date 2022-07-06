@@ -68,11 +68,15 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 					 ip4addr_ntoa(&event->ip_info.ip));
                      
             if (!config.use_dhcp) {
-                tcpip_adapter_ip_info_t ip_info;
-                ip_info.ip.addr = config.ip.addr;
-                ip_info.gw.addr = config.gw.addr;
-                ip_info.netmask.addr = config.netmask.addr;
-                tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_STA, &ip_info);    
+                tcpip_adapter_dhcp_status_t dhcp_status;
+                if ( (tcpip_adapter_dhcpc_get_status(TCPIP_ADAPTER_IF_STA, &dhcp_status) == ESP_OK) && (dhcp_status == TCPIP_ADAPTER_DHCP_STARTED) ) {
+                    tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA);
+                    tcpip_adapter_ip_info_t ip_info;
+                    ip_info.ip.addr = config.ip.addr;
+                    ip_info.gw.addr = config.gw.addr;
+                    ip_info.netmask.addr = config.netmask.addr;
+                    tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_STA, &ip_info);
+                }
             }
 			s_retry_num = 0;
 		}

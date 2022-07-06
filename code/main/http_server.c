@@ -37,7 +37,10 @@ static const char *TAG = "HTTPD";
 
 char configToken[10];
 
+os_timer_t apply_timer;
+
 static uint8_t is_valid_token(char* str);
+static void apply_timer_func(void* param);
 
 char *http_auth_basic(const char *username, const char *password)
 {
@@ -410,6 +413,9 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
                     config_save_settings_to_flash();
                     httpd_resp_send(req, OK_STR, strlen(OK_STR));
                     free(buf);
+					os_timer_disarm(&apply_timer);
+					os_timer_setfn(&apply_timer, apply_timer_func, NULL);
+					os_timer_arm(&apply_timer, 500, 0);	                    
                     return ESP_OK;                    
                 }
             }
@@ -955,4 +961,9 @@ void http_server_deinit(void) {
 static uint8_t is_valid_token(char* str) {
     if (strcmp(str, configToken) != 0) return 0;
     return 1;
+}
+
+static void apply_timer_func(void* param) {
+	ESP_LOGI(TAG, "Applying new configuration");
+	config_apply_settings();
 }

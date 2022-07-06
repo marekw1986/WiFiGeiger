@@ -99,6 +99,7 @@ esp_err_t config_load_settings_from_flash (void) {
 }
 
 esp_err_t config_get_current(config_t* out) {
+	if (out == NULL) return ESP_FAIL;
 	if (xSemaphoreTake(configSemaphore, portMAX_DELAY) == pdTRUE) {
 		*out = config;
 		xSemaphoreGive(configSemaphore);

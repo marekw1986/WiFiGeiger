@@ -164,22 +164,23 @@ static uint8_t validate_number(char *str) {
     return 1;
 }
 
-/*FIX THIS - replace with strtok_r*/
+
 uint8_t is_valid_ip_address(const char *ip) {
     int num, dots = 0;
     char tmpstr[16];
+    char *rest = NULL;
     char *ptr;
     
     if (ip == NULL) { return 0; }
     if ( strlen(ip) > (sizeof(tmpstr)-1) ) {return 0;}
     strncpy(tmpstr, ip, sizeof(tmpstr)-1);
-	ptr = strtok(tmpstr, ".");
+	ptr = strtok_r(tmpstr, ".", &rest);
 	if (ptr == NULL) { return 0; }
     while (ptr) {
         if (!validate_number(ptr)) { return 0; }
         num = atoi(ptr);
         if (num >= 0 && num <= 255) {
-            ptr = strtok(NULL, ".");
+            ptr = strtok_r(NULL, ".", &rest);
             if (ptr != NULL) { dots++; }
         } else { return 0; }
     }

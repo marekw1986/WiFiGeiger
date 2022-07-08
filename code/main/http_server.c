@@ -13,6 +13,7 @@
 #include "geiger.h"
 #include "config.h"
 #include "wificgi.h"
+#include "mqtt_log.h"
 
 #define EMPTY_STR               ""
 #define OK_STR                  "ok"
@@ -595,6 +596,8 @@ esp_err_t sysinfo_get_handler(httpd_req_t *req)
 	}
 	cJSON_AddNumberToObject(root, "free_heap", esp_get_free_heap_size());
 	cJSON_AddNumberToObject(root, "min_free_heap", esp_get_minimum_free_heap_size());
+    time_t mqtt_timestamp = mqtt_get_last_log_timestamp();
+    if (mqtt_timestamp) {cJSON_AddNumberToObject(root, "mqtt_timestamp", mqtt_timestamp);}
 	data = cJSON_Print(root);
 	cJSON_Delete(root);
     httpd_resp_set_type(req, "application/json");

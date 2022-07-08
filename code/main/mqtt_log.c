@@ -36,6 +36,7 @@ esp_mqtt_client_config_t mqtt_cfg = {
 
 esp_mqtt_client_handle_t client;
 os_timer_t mqtt_timer;
+static uint8_t mqtt_connected = 0;
 static time_t mqtt_last_log_timestamp = 0;
 
 void mqtt_timer_func (void* arg);
@@ -52,6 +53,7 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
     switch (event->event_id) {
         case MQTT_EVENT_CONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
+            mqtt_connected = 1;
             data = constructDataJSON();
             if (data) {
                 msg_id = esp_mqtt_client_publish(client, "testTopic", data, 0, 1, 0);
@@ -61,6 +63,7 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             break;
         case MQTT_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+            mqtt_connected = 0;
             break;
 
         case MQTT_EVENT_SUBSCRIBED:
@@ -116,6 +119,10 @@ void mqtt_client_stop(void) {
 
 time_t mqtt_get_last_log_timestamp(void) {
     return mqtt_last_log_timestamp;
+}
+
+uint8_t mqtt_get_connection_status(void) {
+    return mqtt_connected;
 }
 
 void mqtt_timer_func (void* arg) {

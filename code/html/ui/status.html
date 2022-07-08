@@ -60,6 +60,8 @@ function update() {
 		var ap_mac = document.getElementById('ap_mac');
 		var free_heap = document.getElementById('free_heap');
 		var min_free_heap = document.getElementById('min_free_heap');
+		var mqtt_timestamp = document.getElementById('mqtt_timestamp');
+		var mqtt_connected = document.getElementById('mqtt_connected');
 		uptime.value = data.uptime;
 		time.value = data.time;
 		sdk.value = data.sdk;
@@ -70,6 +72,8 @@ function update() {
 		ap_mac.value = data.ap_mac;
 		free_heap.value = data.free_heap;
 		min_free_heap.value = data.min_free_heap;
+        mqtt_status.value = data.mqtt_connected ? "Połączono" : "Rozłączono";
+		mqtt_time.value = (Math.floor(Date.now() / 1000) - data.mqtt_timestamp) + "sekund temu";
 	}, function(xhr) { console.error(xhr); })
 }
 
@@ -96,6 +100,8 @@ function init() {
 <label>AP MAC:</label><input type="text" id="ap_mac" value="" disabled><br>
 <label>Free heap:</label><input type="text" id="free_heap" value="" disabled><br>
 <label>Min. free heap:</label><input type="text" id="min_free_heap" value="" disabled><br>
+<label>Status MQTT:</label><input type="text" id="mqtt_status" value="" disabled><br>
+<label>Aktualizacja MQTT:</label><input type="text" id="mqtt_time" value="" disabled><br>
 <label>Restart urządzenia:</label><input type="button" value="Wykonaj" onclick="reset(0);"><br>
 <label>Ustawienia fabryczne:</label><input type="button" value="Przywróć" onclick="reset(1);"><br>
 <div id="result" style="color:red; display:none;"></div>

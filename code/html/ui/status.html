@@ -62,7 +62,7 @@ function update() {
 		var min_free_heap = document.getElementById('min_free_heap');
 		var mqtt_timestamp = document.getElementById('mqtt_timestamp');
 		var mqtt_connected = document.getElementById('mqtt_connected');
-		uptime.value = data.uptime;
+		uptime.value = data.uptime + " sek.";
 		time.value = data.time;
 		sdk.value = data.sdk;
 		chip.value = data.chip;
@@ -73,7 +73,7 @@ function update() {
 		free_heap.value = data.free_heap;
 		min_free_heap.value = data.min_free_heap;
         mqtt_status.value = data.mqtt_connected ? "Połączono" : "Rozłączono";
-		mqtt_time.value = (Math.floor(Date.now() / 1000) - data.mqtt_timestamp) + "sekund temu";
+		mqtt_time.value = (Math.floor(Date.now() / 1000) - data.mqtt_timestamp) + " sek. temu";
 	}, function(xhr) { console.error(xhr); })
 }
 

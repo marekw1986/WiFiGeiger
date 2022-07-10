@@ -110,88 +110,6 @@ uint8_t check_authentication (httpd_req_t *req)
     return 0;
 }
 
-
-/* An HTTP GET handler */
-esp_err_t hello_get_handler(httpd_req_t *req)
-{
-    char*  buf;
-    size_t buf_len;
-    
-    if (!check_authentication(req)) {return ESP_OK;}
-
-    /* Get header value string length and allocate memory for length + 1,
-     * extra byte for null termination */
-    buf_len = httpd_req_get_hdr_value_len(req, "Host") + 1;
-    if (buf_len > 1) {
-        buf = malloc(buf_len);
-        if (buf) {
-            /* Copy null terminated value string into buffer */
-            if (httpd_req_get_hdr_value_str(req, "Host", buf, buf_len) == ESP_OK) {
-                ESP_LOGI(TAG, "Found header => Host: %s", buf);
-            }
-            free(buf);
-        }
-    }
-
-    buf_len = httpd_req_get_hdr_value_len(req, "Test-Header-2") + 1;
-    if (buf_len > 1) {
-        buf = malloc(buf_len);
-        if (buf) {
-            if (httpd_req_get_hdr_value_str(req, "Test-Header-2", buf, buf_len) == ESP_OK) {
-                ESP_LOGI(TAG, "Found header => Test-Header-2: %s", buf);
-            }
-            free(buf);
-        }
-    }
-
-    buf_len = httpd_req_get_hdr_value_len(req, "Test-Header-1") + 1;
-    if (buf_len > 1) {
-        buf = malloc(buf_len);
-        if (buf) {
-            if (httpd_req_get_hdr_value_str(req, "Test-Header-1", buf, buf_len) == ESP_OK) {
-                ESP_LOGI(TAG, "Found header => Test-Header-1: %s", buf);
-            }
-            free(buf);
-        }
-    }
-
-    /* Read URL query string length and allocate memory for length + 1,
-     * extra byte for null termination */
-    buf_len = httpd_req_get_url_query_len(req) + 1;
-    if (buf_len > 1) {
-        buf = malloc(buf_len);
-        if (buf) {
-            if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK) {
-                ESP_LOGI(TAG, "Found URL query => %s", buf);
-                char param[32];
-                /* Get value of expected key from query string */
-                if (httpd_query_key_value(buf, "query1", param, sizeof(param)) == ESP_OK) {
-                    ESP_LOGI(TAG, "Found URL query parameter => query1=%s", param);
-                }
-                if (httpd_query_key_value(buf, "query3", param, sizeof(param)) == ESP_OK) {
-                    ESP_LOGI(TAG, "Found URL query parameter => query3=%s", param);
-                }
-                if (httpd_query_key_value(buf, "query2", param, sizeof(param)) == ESP_OK) {
-                    ESP_LOGI(TAG, "Found URL query parameter => query2=%s", param);
-                }
-            }
-            free(buf);
-        }
-    }
-
-    /* Set some custom headers */
-    httpd_resp_set_hdr(req, "Custom-Header-1", "Custom-Value-1");
-    httpd_resp_set_hdr(req, "Custom-Header-2", "Custom-Value-2");
-
-    /* Send response with custom headers and body set as the
-     * string passed in user context*/
-    const char* resp_str = (const char*) req->user_ctx;
-    httpd_resp_send(req, resp_str, strlen(resp_str));
-
-    return ESP_OK;
-}
-
-
 esp_err_t reset_cgi_get_handler(httpd_req_t *req)
 {
     char*  buf;
@@ -619,15 +537,6 @@ esp_err_t token_get_handler(httpd_req_t *req) {
 	return ESP_OK;
 }
 
-httpd_uri_t hello = {
-    .uri       = "/hello",
-    .method    = HTTP_GET,
-    .handler   = hello_get_handler,
-    /* Let's pass response string in user
-     * context to demonstrate it's usage */
-    .user_ctx  = "Hello World!"
-};
-
 httpd_uri_t setmode_cgi_get = {
     .uri       = "/ui/setmode.cgi",
     .method    = HTTP_GET,
@@ -700,6 +609,15 @@ httpd_uri_t data_json = {
      .user_ctx = NULL
 };
 
+httpd_uri_t main_get = {
+    .uri       = "/",
+    .method    = HTTP_GET,
+    .handler   = data_json_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx = NULL
+};
+
 httpd_uri_t settings_json = {
     .uri       = "/ui/settings.json",
     .method    = HTTP_GET,
@@ -756,6 +674,15 @@ httpd_uri_t form_css_get = {
 
 httpd_uri_t index_html_get = {
     .uri        = "/ui/index.html",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/ui/index.html"
+};
+
+httpd_uri_t ui_get = {
+    .uri        = "/ui",
     .method     = HTTP_GET,
     .handler    = file_get_handler,
     /* Let's pass response string in user
@@ -835,6 +762,15 @@ httpd_uri_t wifi_get = {
      .user_ctx  = "/spiffs/ui/wifi/wifi.html"
 };
 
+httpd_uri_t wifi_html_get = {
+    .uri        = "/ui/wifi/wifi.html",
+    .method     = HTTP_GET,
+    .handler    = file_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+     .user_ctx  = "/spiffs/ui/wifi/wifi.html"
+};
+
 httpd_uri_t connecting_html_get = {
     .uri        = "/ui/wifi/connecting.html",
     .method     = HTTP_GET,
@@ -883,7 +819,6 @@ httpd_handle_t start_webserver(void)
     if (httpd_start(&server, &config) == ESP_OK) {
         // Set URI handlers
         ESP_LOGI(TAG, "Registering URI handlers");
-        httpd_register_uri_handler(server, &hello);
         httpd_register_uri_handler(server, &data_json);
         httpd_register_uri_handler(server, &settings_json);
         httpd_register_uri_handler(server, &setmode_cgi_get);
@@ -899,6 +834,7 @@ httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &config_html_get);
         httpd_register_uri_handler(server, &form_css_get);
         httpd_register_uri_handler(server, &index_html_get);
+        httpd_register_uri_handler(server, &ui_get);
         httpd_register_uri_handler(server, &common_js_get);
         httpd_register_uri_handler(server, &menu_css_get);
         httpd_register_uri_handler(server, &menu_js_get);
@@ -907,6 +843,7 @@ httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &status_html_get);
         httpd_register_uri_handler(server, &style_css_get);
         httpd_register_uri_handler(server, &wifi_get);
+        httpd_register_uri_handler(server, &wifi_html_get);
         httpd_register_uri_handler(server, &connecting_html_get);
         httpd_register_uri_handler(server, &icons_png_get);
         httpd_register_uri_handler(server, &wifi_css_get);

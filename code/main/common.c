@@ -48,14 +48,24 @@ inline void increment_uptime(void) {
 char* constructDataJSON(void) {
 	cJSON *root;
 	cJSON *geiger;
+	cJSON *bme280;
 	char *out;
+	config_t config;
+	
+	if (config_get_current(&config) == ESP_FAIL) return NULL;
 	
 	root = cJSON_CreateObject();
     if (root == NULL) return NULL;
-	cJSON_AddStringToObject(root, "id", "ethergeiger1");
+	cJSON_AddStringToObject(root, "id", config.devname);
+	cJSON_AddStringToObject(root, "class", "EtherGeiger");
 	cJSON_AddItemToObject(root, "geiger", geiger = cJSON_CreateObject());
 	cJSON_AddNumberToObject(geiger, "timestamp", time(NULL));
 	cJSON_AddNumberToObject(geiger, "radiation", cpm2sievert(geiger_get_cpm()));
+	cJSON_AddItemToObject(root, "bme280", bme280 = cJSON_CreateObject());
+	cJSON_AddNumberToObject(bme280, "timestamp", time(NULL));
+	cJSON_AddNumberToObject(bme280, "temperature", 0);
+	cJSON_AddNumberToObject(bme280, "humidity", 0);
+	cJSON_AddNumberToObject(bme280, "pressure", 0);
 	out = cJSON_Print(root);
 	cJSON_Delete(root);
     if (out == NULL) return NULL;
@@ -76,6 +86,7 @@ char* constructSettingsJSON(void) {
     if (root == NULL) return NULL;
 	cJSON_AddBoolToObject(root, "dhcp", config.use_dhcp);
 	snprintf(buff, sizeof(buff)-1, IPSTR, IP2STR(&config.ip));
+	cJSON_AddStringToObject(root, "devname", config.devname);
 	cJSON_AddStringToObject(root, "ip", buff);
 	snprintf(buff, sizeof(buff)-1, IPSTR, IP2STR(&config.netmask));
 	cJSON_AddStringToObject(root, "netmask", buff);

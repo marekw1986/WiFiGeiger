@@ -40,6 +40,7 @@ function test() {
 	var result = document.getElementById('result');
 	if (document.getElementById('dhcpYes').checked) {var dhcp="yes";}
 	else {var dhcp="no";}
+	var devname = document.getElementById('devname');
 	var ip = document.getElementById('ip');
 	var netmask = document.getElementById('netmask');
 	var gw = document.getElementById('gw');
@@ -67,6 +68,14 @@ function test() {
 			return false;
 		}
 	}
+	
+	if (devname.value === '') {
+		devname.focus();
+		result.style.display = 'block';
+		result.innerHTML = "Pole \"Nazwa urządzenia\" nie może być puste.";
+		return false;
+	}
+	
 	if (ntp1.value === '') {
 		ntp1.focus();
 		result.style.display = 'block';
@@ -99,6 +108,10 @@ function test() {
                 result.style.display = 'block';
                 result.innerHTML = "Nieprawidłowy token operacji. Spróbuj ponownie załadować stronę.";
             }
+			else if (http_request.responseText === "invalid_devname") {
+				result.style.display = 'block';
+				result.innerHTML = "Błąd parsowania nowej nazwy urządzenia.";
+			}            
 			else if (http_request.responseText === "invalid_dhcp") {
 				result.style.display = 'block';
 				result.innerHTML = "Błąd parsowania nowych ustawień DHCP.";
@@ -176,13 +189,14 @@ function test() {
 	};
 	http_request.open("POST", "/ui/config.cgi", true);
 	http_request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-	var request = "token=" + token.value + "&dhcp=" + dhcp + "&ip=" + ip.value + "&netmask=" + netmask.value + "&gw=" + gw.value + "&dns1=" + dns1.value + "&dns2=" + dns2.value + "&ntp1=" + ntp1.value + "&ntp2=" + ntp2.value + "&ntp3=" + ntp3.value + "&timezone=" + timezone.value + "&dls=" + dls + "&mqtt=" + mqtt.value + "&topic=" + topic.value;
+	var request = "token=" + token.value + "&devname=" + devname.value + "&dhcp=" + dhcp + "&ip=" + ip.value + "&netmask=" + netmask.value + "&gw=" + gw.value + "&dns1=" + dns1.value + "&dns2=" + dns2.value + "&ntp1=" + ntp1.value + "&ntp2=" + ntp2.value + "&ntp3=" + ntp3.value + "&timezone=" + timezone.value + "&dls=" + dls + "&mqtt=" + mqtt.value + "&topic=" + topic.value;
 	http_request.send(request);
 	return true;	
 }
 
 function getConfig() {
 	loadJSON('/ui/settings.json', function(data) {
+		var devname = document.getElementById('devname');
 		var dhcpYes = document.getElementById('dhcpYes');
 		var dhcpNo = document.getElementById('dhcpNo');
 		var ip = document.getElementById('ip');
@@ -205,6 +219,7 @@ function getConfig() {
 			dhcpNo.checked = true;
 			hide('dhcpNo', 'ipSettings');
 		}
+		devname.value = data.devname
 		ip.value = data.ip;
 		netmask.value = data.netmask;
 		gw.value = data.gw;
@@ -235,6 +250,9 @@ function init()
 <h1>Konfiguracja</h1>
 
 <input type="hidden" name="token" id="token" value="">
+
+<label>Nazwa urządzenia:</label><input type="text" name="devname" id="devname" value="" maxlength="60"><br><br>
+
 <label>DHCP:</label> 
 <input onClick="hide('dhcpNo', 'ipSettings')" value="yes" type="radio" name="dhcp" id="dhcpYes">wł.
 <input onClick="hide('dhcpNo', 'ipSettings');" value="no" type="radio" name="dhcp" id="dhcpNo">wył.<br><br>
@@ -251,7 +269,7 @@ function init()
 <label>Serwer NTP #2:</label><input type="text" name="ntp2" id="ntp2" value="" maxlength="60"><br>
 <label>Serwer NTP #3:</label><input type="text" name="ntp3" id="ntp3" value="" maxlength="60"><br><br>
 
-<label>Serwer MQTT:</label><input type="text" name="mqtt_addr" id="mqtt_server" value="" maxlength="60"><br>
+<label>Serwer MQTT:</label><input type="text" name="mqtt_server" id="mqtt_server" value="" maxlength="60"> (pozostaw puste by wyłaczyć logowanie MQTT)<br>
 <label>Temat MQTT:</label><input type="text" name="mqtt_topic" id="mqtt_topic" value="" maxlength="60"><br>
 
 <input type="hidden" name="curtz" id="curtz" value="">

@@ -18,6 +18,7 @@
 #define EMPTY_STR               ""
 #define OK_STR                  "ok"
 #define INVALID_TOKEN_STR       "invalid_token"
+#define INVALID_DEVNAME_STR     "invalid_devname"
 #define INVALID_IP_STR          "invalid_ip"
 #define INVALID_NETMASK_STR     "invalid_netmask"
 #define INVALID_GW_STR          "invalid_gw"
@@ -182,13 +183,24 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
 				return ESP_FAIL;
 			}
 			buf[ret] = '\0';
-            char param[32];
+            char param[64];
             if (httpd_query_key_value(buf, "token", param, sizeof(param)) == ESP_OK) {
                 if (!is_valid_token(param)) {
                     httpd_resp_send(req, INVALID_TOKEN_STR, strlen(INVALID_TOKEN_STR));
                     free(buf);
                     return ESP_OK;                }
                 else {
+					//parse devname here
+					if (httpd_query_key_value(buf, "devname", param, sizeof(param)) == ESP_OK) {
+						if (strlen(param) <= 32) {
+							strncpy(newConfig.devname, param, sizeof(newConfig.devname)-1);
+						} 
+						else {
+							httpd_resp_send(req, INVALID_IP_STR, strlen(INVALID_DEVNAME_STR));
+							free(buf);
+							return ESP_OK;
+						}
+					}
                     //parse ip here
                     if (httpd_query_key_value(buf, "ip", param, sizeof(param)) == ESP_OK) {
                         if (is_valid_ip_address(param)) {
@@ -820,6 +832,7 @@ httpd_handle_t start_webserver(void)
         // Set URI handlers
         ESP_LOGI(TAG, "Registering URI handlers");
         httpd_register_uri_handler(server, &data_json);
+        httpd_register_uri_handler(server, &main_get);
         httpd_register_uri_handler(server, &settings_json);
         httpd_register_uri_handler(server, &setmode_cgi_get);
         httpd_register_uri_handler(server, &reset_cgi_get);

@@ -10,6 +10,7 @@
 #include "nvs.h"
 
 typedef struct {
+	char devname[34];
 	ip4_addr_t ip;
 	ip4_addr_t netmask;
 	ip4_addr_t gw;

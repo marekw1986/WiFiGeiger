@@ -22,6 +22,7 @@
 #include "cJSON.h"
 
 #include "common.h"
+#include "config.h"
 #include "mqtt_client.h"
 #include "mqtt_log.h"
 #include "geiger.h"
@@ -146,6 +147,9 @@ static void disconnect_handler(void* arg, esp_event_base_t event_base, int32_t e
 static void connect_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
 {
 	ESP_LOGI(TAG, "MQTT connect handler (GOT IP)");
+	config_t config;
+	if (config_get_current(&config) == ESP_FAIL) return;
+	if (strlen(config.mqtt_server) == 0) return;	//Ignore MQTT if server address was left empty
 	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &client));
 	esp_mqtt_client_start(client);
 }

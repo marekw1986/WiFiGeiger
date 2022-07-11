@@ -11,6 +11,7 @@ static config_t config;
 void ICACHE_FLASH_ATTR config_load_defaults (void) {
 	
 	if (xSemaphoreTake(configSemaphore, portMAX_DELAY) == pdTRUE) {
+		strcpy(config.devname, "WiFiGeiger");
 		IP4_ADDR(&(config.ip), 192, 168, 1, 42);
 		IP4_ADDR(&(config.netmask), 255, 255, 255, 0);
 		IP4_ADDR(&(config.gw), 192, 168, 1, 1);

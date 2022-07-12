@@ -31,6 +31,7 @@
 #define INVALID_TIMEZONE_STR    "invalid_timezone"
 #define INVALID_DLS_STR         "invalid_dls"
 #define INVALID_MQTT_STR        "invalid_mqtt"
+#define INVALID_MQTT_PORT_STR   "invalid_mqttport"
 #define INVALID_TOPIC_STR       "invalid_topic"
 
 #define HTTPD_401      "401 UNAUTHORIZED"           /*!< HTTP Response 401 */
@@ -328,6 +329,18 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
                             return ESP_OK;                            
                         }
                     }
+                    //parse mqtt_port here
+                    if (httpd_query_key_value(buf, "mqtt_port", param, sizeof(param)) == ESP_OK) {
+						uint32_t tmpval = strtol(param, NULL, 10);
+                        if (tmpval) {
+							newConfig.mqtt_port = tmpval;
+						}
+                        else {
+                            httpd_resp_send(req, INVALID_MQTT_PORT_STR, strlen(INVALID_MQTT_PORT_STR));
+                            free(buf);
+                            return ESP_OK;                            
+                        }
+                    }                    
                     //parse topic here
                     if (httpd_query_key_value(buf, "topic", param, sizeof(param)) == ESP_OK) {
                         if (strlen(param) < sizeof(newConfig.mqtt_topic)) {strncpy(newConfig.mqtt_topic, param, sizeof(newConfig.mqtt_topic)-1);}

@@ -21,6 +21,7 @@ typedef struct {
 	char ntp2[64];
 	char ntp3[64];
 	char mqtt_server[64];
+	uint32_t mqtt_port;
 	char mqtt_topic[64];
 	char password[34];
 	int8_t timezone;

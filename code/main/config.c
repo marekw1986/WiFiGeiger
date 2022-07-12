@@ -21,7 +21,8 @@ void ICACHE_FLASH_ATTR config_load_defaults (void) {
 		strcpy(config.ntp1, "ntp1.tp.pl");
 		strcpy(config.ntp2, "ntp2.tp.pl");
 		strcpy(config.ntp3, "ntp.nask.pl");
-		strcpy(config.mqtt_server, "192.168.1.95");
+		strcpy(config.mqtt_server, "192.168.1.105");
+		config.mqtt_port = 1883;
 		strcpy(config.mqtt_topic, "testTopic");
 		strcpy(config.password, "s3cr3t");
 		config.timezone = 2;
@@ -31,7 +32,9 @@ void ICACHE_FLASH_ATTR config_load_defaults (void) {
 }
 
 void config_apply_settings (void) {
-	mqtt_client_stop();
+	//mqtt_client_deinit();
+	//mqtt_client_init();	
+
     tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA);
 	if (config.use_dhcp) {
 		tcpip_adapter_dhcpc_start(TCPIP_ADAPTER_IF_STA);
@@ -49,7 +52,7 @@ void config_apply_settings (void) {
     sntp_setservername(1, config.ntp2);
     sntp_setservername(2, config.ntp3);
 	//sntp_set_timezone(config.timezone);
-	sntp_init();	
+	sntp_init();
 }
 
 esp_err_t config_save_settings_to_flash (void) {

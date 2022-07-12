@@ -30,9 +30,11 @@
 
 
 static const char *TAG = "MQTT log";
+static char mqtt_server[64];
+static char mqtt_topic[64];
 
 esp_mqtt_client_config_t mqtt_cfg = {
-	.uri = "mqtt://192.168.1.105:1883",
+	//.uri = "mqtt://192.168.1.105:1883",
 };
 
 esp_mqtt_client_handle_t client;
@@ -57,7 +59,7 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             mqtt_connected = 1;
             data = constructDataJSON();
             if (data) {
-                msg_id = esp_mqtt_client_publish(client, "testTopic", data, 0, 1, 0);
+                msg_id = esp_mqtt_client_publish(client, mqtt_topic, data, 0, 1, 0);
                 free(data);
                 ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
             }
@@ -107,9 +109,30 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 
 void mqtt_client_init(void) {
+	ESP_LOGI(TAG, "Itializing MQTT client");
+	config_t config;
+	if (config_get_current(&config) == ESP_FAIL) {
+		ESP_LOGE(TAG, "Cant read configuration data");
+		return;
+	}
+	if (strlen(config.mqtt_server) == 0) {
+		ESP_LOGI(TAG, "MQTT server address empty - disabled");
+		return;
+	}
+	strncpy(mqtt_server, config.mqtt_server, sizeof(config.mqtt_server)-1);
+	strncpy(mqtt_topic, config.mqtt_topic, sizeof(config.mqtt_topic)-1);
+	mqtt_cfg.host = mqtt_server;
+	mqtt_cfg.port = config.mqtt_port;
 	client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, client);
 	ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &client));
+}
+
+void mqtt_client_deinit(void) {
+	ESP_LOGI(TAG, "Deinitializing MQTT client");
+	mqtt_client_stop();
+	esp_mqtt_client_destroy(client);
+	mqtt_connected = 0;
 }
 
 void mqtt_client_stop(void) {
@@ -131,7 +154,7 @@ void mqtt_timer_func (void* arg) {
 	
 	data = constructDataJSON();
     if (data) {
-        esp_mqtt_client_publish(client, "testTopic", data, 0, 1, 0);
+        esp_mqtt_client_publish(client, mqtt_topic, data, 0, 1, 0);
         free(data);
     }
 }

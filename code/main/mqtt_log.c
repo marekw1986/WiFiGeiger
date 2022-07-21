@@ -30,7 +30,7 @@
 
 
 static const char *TAG = "MQTT log";
-static char mqtt_server[64];
+static char mqtt_uri[128];
 static char mqtt_topic[64];
 
 esp_mqtt_client_config_t mqtt_cfg = {
@@ -119,10 +119,11 @@ void mqtt_client_init(void) {
 		ESP_LOGI(TAG, "MQTT server address empty - disabled");
 		return;
 	}
-	strncpy(mqtt_server, config.mqtt_server, sizeof(config.mqtt_server)-1);
+    //.uri = "mqtt://192.168.1.105:1883"
+    snprintf(mqtt_uri, sizeof(mqtt_uri)-1, "mqtt://%s:%d", config.mqtt_server, config.mqtt_port);
+    mqtt_cfg.uri = mqtt_uri;
+	//strncpy(mqtt_server, config.mqtt_server, sizeof(config.mqtt_server)-1);
 	strncpy(mqtt_topic, config.mqtt_topic, sizeof(config.mqtt_topic)-1);
-	mqtt_cfg.host = mqtt_server;
-	mqtt_cfg.port = config.mqtt_port;
 	client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, client);
 	ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &client));
@@ -174,5 +175,7 @@ static void connect_handler(void* arg, esp_event_base_t event_base, int32_t even
 	if (config_get_current(&config) == ESP_FAIL) return;
 	if (strlen(config.mqtt_server) == 0) return;	//Ignore MQTT if server address was left empty
 	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &client));
+    snprintf(mqtt_uri, sizeof(mqtt_uri)-1, "mqtt://%s:%d", config.mqtt_server, config.mqtt_port);
+    esp_mqtt_client_set_uri(client, mqtt_uri);
 	esp_mqtt_client_start(client);
 }

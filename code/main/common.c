@@ -27,6 +27,7 @@
 #include "geiger.h"
 #include "config.h"
 #include "ds3231.h"
+#include "bme280.h"
 
 extern const char *TAG;
 extern SemaphoreHandle_t i2cSemaphore;
@@ -62,10 +63,11 @@ char* constructDataJSON(void) {
 	cJSON_AddNumberToObject(geiger, "timestamp", time(NULL));
 	cJSON_AddNumberToObject(geiger, "radiation", cpm2sievert(geiger_get_cpm()));
 	cJSON_AddItemToObject(root, "bme280", bme280 = cJSON_CreateObject());
-	cJSON_AddNumberToObject(bme280, "timestamp", time(NULL));
-	cJSON_AddNumberToObject(bme280, "temperature", 0);
-	cJSON_AddNumberToObject(bme280, "humidity", 0);
-	cJSON_AddNumberToObject(bme280, "pressure", 0);
+	bme_data_t bme_data = bme_get_data();
+	cJSON_AddNumberToObject(bme280, "timestamp", bme_data.timestamp);
+	cJSON_AddNumberToObject(bme280, "temperature", bme_data.temperature);
+	cJSON_AddNumberToObject(bme280, "humidity", bme_data.humidity);
+	cJSON_AddNumberToObject(bme280, "pressure", bme_data.pressure);
 	out = cJSON_Print(root);
 	cJSON_Delete(root);
     if (out == NULL) return NULL;

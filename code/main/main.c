@@ -22,6 +22,7 @@
 #include "common.h"
 #include "geiger.h"
 #include "ds3231.h"
+#include "bme280.h"
 #include "wifi.h"
 #include "http_server.h"
 #include "mqtt_log.h"
@@ -76,20 +77,30 @@ void gpio_isr_button_handler (void *arg) {
 void i2c_task_example(void *arg) {
 	time_t now;
 	struct tm timeinfo;
+	static uint32_t bme_timer = 0;
+	
+	if (xSemaphoreTake(i2cSemaphore, portMAX_DELAY) == pdTRUE) {
+		bme_init();
+		bme_setup();
+		xSemaphoreGive(i2cSemaphore);
+	}
+	else {
+		ESP_LOGI(TAG, "I2C semaphore taken. Can't configure BME280");
+	}
 
     while(1) {
 		xSemaphoreTake( xSemaphore, portMAX_DELAY );
 		
-		//if (xSemaphoreTake(i2cSemaphore, portMAX_DELAY) == pdTRUE) {
-		//	if (ds3231_getTime(&timeinfo)) {
-		//		printf(asctime(&timeinfo));
-		//	}
-		//	else {printf("Time read FAILURE\r\n");}
-		//	xSemaphoreGive(i2cSemaphore);
-		//}
-		//else {
-		//	ESP_LOGI(TAG, "I2C semaphore taken");
-		//}
+		if ( (uint32_t)(millis()-bme_timer) > 20000 ) {
+			if (xSemaphoreTake(i2cSemaphore, portMAX_DELAY) == pdTRUE) {
+				bme_update_data();
+				xSemaphoreGive(i2cSemaphore);
+				bme_timer = millis();
+			}
+			else {
+				ESP_LOGI(TAG, "I2C semaphore taken");
+			}
+		}
 		
 		time(&now);
 		localtime_r(&now, &timeinfo);	

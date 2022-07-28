@@ -11,6 +11,7 @@
 
 static const char *TAG = "BME280";
 static bme_data_t current_data;
+static uint8_t bme_data_present;
 SemaphoreHandle_t bmeSemaphore = NULL;
 
 uint16_t bme_T1;
@@ -55,6 +56,7 @@ void bme_init(void) {
 	bme_H4 = 0;
 	bme_H5 = 0;
 	bme_H6 = 0;
+	bme_data_present = 0;
 	memset(&current_data, 0x00, sizeof(current_data));
     bmeSemaphore = xSemaphoreCreateBinary();
 	if( bmeSemaphore == NULL ) {
@@ -67,21 +69,15 @@ void bme_init(void) {
 uint8_t bme_read_data(uint8_t reg)
 {
 	uint8_t tmp = 0;
-    if (i2c_master_read_buf(I2C_MASTER_NUM, BME280_ADDR, reg, &tmp, 1) == ESP_OK) {
-		ESP_LOGI(TAG, "Prawidłowy odczyt z BME280");
-	}
-	else {
-		ESP_LOGI(TAG, "Błąd odczytu z BME280");
+    if (i2c_master_read_buf(I2C_MASTER_NUM, BME280_ADDR, reg, &tmp, 1) != ESP_OK) {
+		ESP_LOGE(TAG, "Błąd odczytu z BME280");
 	}
 	return tmp;
 }
 
 void bme_write_data(uint8_t reg, uint8_t value) {
-    if (i2c_master_write_buf(I2C_MASTER_NUM, BME280_ADDR, reg, &value, 1) == ESP_OK) {
-		ESP_LOGI(TAG, "Prawidłowy zapis do BME280");
-	}
-	else {
-		ESP_LOGI(TAG, "Błąd zapisu do BME280");
+    if (i2c_master_write_buf(I2C_MASTER_NUM, BME280_ADDR, reg, &value, 1) != ESP_OK) {
+		ESP_LOGE(TAG, "Błąd zapisu do BME280");
 	}
 }
 
@@ -210,21 +206,22 @@ void bme_update_data(void) {
     if (xSemaphoreTake(bmeSemaphore, portMAX_DELAY) == pdTRUE) {
         current_data = tmp_data;
         xSemaphoreGive(bmeSemaphore);
+        bme_data_present = 1;
     }
     else {
         ESP_LOGI(TAG, "BME semaphore taken");
     }
 }
 
-bme_data_t bme_get_data(void) {
-    bme_data_t tmp_data;
-    
+uint8_t bme_get_data(bme_data_t* data) {    
+	if (!bme_data_present) return 0;
     if (xSemaphoreTake(bmeSemaphore, portMAX_DELAY) == pdTRUE) {
-        tmp_data = current_data;
+        *data = current_data;
         xSemaphoreGive(bmeSemaphore);
     }
     else {
         ESP_LOGI(TAG, "BME semaphore taken");
+        return 0;
     }
-	return tmp_data;
+	return 1;
 }

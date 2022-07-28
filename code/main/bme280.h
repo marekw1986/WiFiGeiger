@@ -21,4 +21,4 @@ double bme_get_pressure(void);
 double bme_get_humidity(void);
 double bme_get_altitude(double p, double p0);
 void bme_update_data(void);
-bme_data_t bme_get_data(void);
+uint8_t bme_get_data(bme_data_t* data);

@@ -59,15 +59,21 @@ char* constructDataJSON(void) {
     if (root == NULL) return NULL;
 	cJSON_AddStringToObject(root, "id", config.devname);
 	cJSON_AddStringToObject(root, "class", "EtherGeiger");
-	cJSON_AddItemToObject(root, "geiger", geiger = cJSON_CreateObject());
-	cJSON_AddNumberToObject(geiger, "timestamp", time(NULL));
-	cJSON_AddNumberToObject(geiger, "radiation", cpm2sievert(geiger_get_cpm()));
-	cJSON_AddItemToObject(root, "bme280", bme280 = cJSON_CreateObject());
-	bme_data_t bme_data = bme_get_data();
-	cJSON_AddNumberToObject(bme280, "timestamp", bme_data.timestamp);
-	cJSON_AddNumberToObject(bme280, "temperature", bme_data.temperature);
-	cJSON_AddNumberToObject(bme280, "humidity", bme_data.humidity);
-	cJSON_AddNumberToObject(bme280, "pressure", bme_data.pressure);
+	if (uptime > 59) {
+		cJSON_AddItemToObject(root, "geiger", geiger = cJSON_CreateObject());
+		cJSON_AddNumberToObject(geiger, "timestamp", time(NULL));
+		cJSON_AddNumberToObject(geiger, "radiation", cpm2sievert(geiger_get_cpm()));
+	}
+	
+	bme_data_t bme_data;
+	if (bme_get_data(&bme_data)) {
+		cJSON_AddItemToObject(root, "bme280", bme280 = cJSON_CreateObject());
+		cJSON_AddNumberToObject(bme280, "timestamp", bme_data.timestamp);
+		cJSON_AddNumberToObject(bme280, "temperature", bme_data.temperature);
+		cJSON_AddNumberToObject(bme280, "humidity", bme_data.humidity);
+		cJSON_AddNumberToObject(bme280, "pressure", bme_data.pressure);
+	}
+	
 	out = cJSON_Print(root);
 	cJSON_Delete(root);
     if (out == NULL) return NULL;

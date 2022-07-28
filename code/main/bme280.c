@@ -11,6 +11,7 @@
 
 static const char *TAG = "BME280";
 static bme_data_t current_data;
+SemaphoreHandle_t bmeSemaphore = NULL;
 
 uint16_t bme_T1;
 int16_t bme_T2;
@@ -55,6 +56,12 @@ void bme_init(void) {
 	bme_H5 = 0;
 	bme_H6 = 0;
 	memset(&current_data, 0x00, sizeof(current_data));
+    bmeSemaphore = xSemaphoreCreateBinary();
+	if( bmeSemaphore == NULL ) {
+        ESP_LOGE(TAG, "Can't create BME semaphore");
+        while(1);
+    }
+	xSemaphoreGive(bmeSemaphore);
 }
 
 uint8_t bme_read_data(uint8_t reg)
@@ -192,14 +199,32 @@ double bme_get_altitude(double p, double p0) {
 	return 44330 * (1 - pow((p/p0), (1/5.255)));
 }
 
-void bme_update_data(void) {	
+void bme_update_data(void) {
+    bme_data_t tmp_data;
+    	
 	bme_read_temp_press_and_hum();
-	current_data.temperature = bme_get_temperature();
-	current_data.pressure = bme_get_pressure(); //value in hPa
-	current_data.humidity = bme_get_humidity() * 100; //value in percents
-	current_data.timestamp = time(NULL);
+	tmp_data.temperature = bme_get_temperature();
+	tmp_data.pressure = bme_get_pressure(); //value in hPa
+	tmp_data.humidity = bme_get_humidity() * 100; //value in percents
+	tmp_data.timestamp = time(NULL);
+    if (xSemaphoreTake(bmeSemaphore, portMAX_DELAY) == pdTRUE) {
+        current_data = tmp_data;
+        xSemaphoreGive(bmeSemaphore);
+    }
+    else {
+        ESP_LOGI(TAG, "BME semaphore taken");
+    }
 }
 
 bme_data_t bme_get_data(void) {
-	return current_data;
+    bme_data_t tmp_data;
+    
+    if (xSemaphoreTake(bmeSemaphore, portMAX_DELAY) == pdTRUE) {
+        tmp_data = current_data;
+        xSemaphoreGive(bmeSemaphore);
+    }
+    else {
+        ESP_LOGI(TAG, "BME semaphore taken");
+    }
+	return tmp_data;
 }

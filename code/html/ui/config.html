@@ -36,6 +36,15 @@ function ValidateIPaddress(inputText)  {
 		return false;  
 	}  
 }
+function ValidateMACaddress(inputText) {
+    var macformat = /^[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}$/;
+    if(inputText.value.match(macformat)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
 function test() {
 	var result = document.getElementById('result');
 	if (document.getElementById('dhcpYes').checked) {var dhcp="yes";}
@@ -70,7 +79,7 @@ function test() {
 		}
 	}
 	
-	if (devname.value === '') {
+	if (mqtt_port.value === '') {
 		mqtt_port.focus();
 		result.style.display = 'block';
 		result.innerHTML = "Pole \"Port MQTT\" nie może być puste.";

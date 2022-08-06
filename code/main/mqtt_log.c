@@ -30,7 +30,7 @@
 
 
 static const char *TAG = "MQTT log";
-static char mqtt_uri[128];
+static char mqtt_uri[512];
 static char mqtt_topic[64];
 
 esp_mqtt_client_config_t mqtt_cfg = {
@@ -120,7 +120,12 @@ void mqtt_client_init(void) {
 		return;
 	}
     //.uri = "mqtt://192.168.1.105:1883"
-    snprintf(mqtt_uri, sizeof(mqtt_uri)-1, "mqtt://%s:%d", config.mqtt_server, config.mqtt_port);
+    if (strlen(config.mqtt_username) == 0) {
+		snprintf(mqtt_uri, sizeof(mqtt_uri)-1, "mqtt://%s:%d", config.mqtt_server, config.mqtt_port);
+	}
+	else {
+		snprintf(mqtt_uri, sizeof(mqtt_uri)-1, "mqtt://%s:%s@%s:%d", config.mqtt_username, config.mqtt_password, config.mqtt_server, config.mqtt_port);
+	}
     mqtt_cfg.uri = mqtt_uri;
 	//strncpy(mqtt_server, config.mqtt_server, sizeof(config.mqtt_server)-1);
 	strncpy(mqtt_topic, config.mqtt_topic, sizeof(config.mqtt_topic)-1);

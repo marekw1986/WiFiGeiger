@@ -25,6 +25,8 @@ void ICACHE_FLASH_ATTR config_load_defaults (void) {
 		config.mqtt_port = 1883;
 		strcpy(config.mqtt_topic, "testTopic");
 		strcpy(config.password, "s3cr3t");
+		strcpy(config.mqtt_username, "");
+		strcpy(config.mqtt_password, "");
 		config.timezone = 2;
 		config.daylight = 0;
 		xSemaphoreGive(configSemaphore);

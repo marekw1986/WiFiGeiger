@@ -15,24 +15,26 @@
 #include "wificgi.h"
 #include "mqtt_log.h"
 
-#define EMPTY_STR               ""
-#define OK_STR                  "ok"
-#define INVALID_TOKEN_STR       "invalid_token"
-#define INVALID_DEVNAME_STR     "invalid_devname"
-#define INVALID_IP_STR          "invalid_ip"
-#define INVALID_NETMASK_STR     "invalid_netmask"
-#define INVALID_GW_STR          "invalid_gw"
-#define INVALID_DNS1_STR        "invalid_dns1"
-#define INVALID_DNS2_STR        "invalid_dns2"
-#define INVALID_NTP1_STR        "invalid_ntp1"
-#define INVALID_NTP2_STR        "invalid_ntp2"
-#define INVALID_NTP3_STR        "invalid_ntp3"
-#define INVALID_DHCP_STR        "invalid_dhcp"
-#define INVALID_TIMEZONE_STR    "invalid_timezone"
-#define INVALID_DLS_STR         "invalid_dls"
-#define INVALID_MQTT_STR        "invalid_mqtt"
-#define INVALID_MQTT_PORT_STR   "invalid_mqttport"
-#define INVALID_TOPIC_STR       "invalid_topic"
+#define EMPTY_STR               	""
+#define OK_STR                  	"ok"
+#define INVALID_TOKEN_STR       	"invalid_token"
+#define INVALID_DEVNAME_STR     	"invalid_devname"
+#define INVALID_IP_STR          	"invalid_ip"
+#define INVALID_NETMASK_STR     	"invalid_netmask"
+#define INVALID_GW_STR          	"invalid_gw"
+#define INVALID_DNS1_STR        	"invalid_dns1"
+#define INVALID_DNS2_STR        	"invalid_dns2"
+#define INVALID_NTP1_STR        	"invalid_ntp1"
+#define INVALID_NTP2_STR        	"invalid_ntp2"
+#define INVALID_NTP3_STR        	"invalid_ntp3"
+#define INVALID_DHCP_STR        	"invalid_dhcp"
+#define INVALID_TIMEZONE_STR    	"invalid_timezone"
+#define INVALID_DLS_STR         	"invalid_dls"
+#define INVALID_MQTT_STR        	"invalid_mqtt"
+#define INVALID_MQTT_PORT_STR   	"invalid_mqttport"
+#define INVALID_MQTTUSERNAME_STR   	"invalid_mqttusername"
+#define INVALID_MQTTPASSWORD_STR   	"invalid_mqttpassword"
+#define INVALID_TOPIC_STR       	"invalid_topic"
 
 #define HTTPD_401      "401 UNAUTHORIZED"           /*!< HTTP Response 401 */
 
@@ -340,7 +342,25 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
                             free(buf);
                             return ESP_OK;                            
                         }
-                    }                    
+                    } 
+                    //parse MQTT username here
+                    if (httpd_query_key_value(buf, "mqtt_username", param, sizeof(param)) == ESP_OK) {
+                        if (strlen(param) < sizeof(newConfig.mqtt_username)) {strncpy(newConfig.mqtt_username, param, sizeof(newConfig.mqtt_username)-1);}
+                        else {
+                            httpd_resp_send(req, INVALID_TOPIC_STR, strlen(INVALID_MQTTUSERNAME_STR));
+                            free(buf);
+                            return ESP_OK;                            
+                        }                        
+                    } 
+                    //parse MQTT username here
+                    if (httpd_query_key_value(buf, "mqtt_password", param, sizeof(param)) == ESP_OK) {
+                        if (strlen(param) < sizeof(newConfig.mqtt_password)) {strncpy(newConfig.mqtt_password, param, sizeof(newConfig.mqtt_password)-1);}
+                        else {
+                            httpd_resp_send(req, INVALID_TOPIC_STR, strlen(INVALID_MQTTPASSWORD_STR));
+                            free(buf);
+                            return ESP_OK;                            
+                        }                        
+                    }                                                               
                     //parse topic here
                     if (httpd_query_key_value(buf, "topic", param, sizeof(param)) == ESP_OK) {
                         if (strlen(param) < sizeof(newConfig.mqtt_topic)) {strncpy(newConfig.mqtt_topic, param, sizeof(newConfig.mqtt_topic)-1);}
@@ -541,7 +561,7 @@ esp_err_t sysinfo_get_handler(httpd_req_t *req)
 	cJSON_AddNumberToObject(root, "min_free_heap", esp_get_minimum_free_heap_size());
     cJSON_AddBoolToObject(root, "mqtt_connected", mqtt_get_connection_status());
     time_t mqtt_timestamp = mqtt_get_last_log_timestamp();
-    if (mqtt_timestamp) {cJSON_AddNumberToObject(root, "mqtt_timestamp", mqtt_timestamp);}
+    if (mqtt_timestamp) {cJSON_AddNumberToObject(root, "mqtt_time", get_uptime()-mqtt_timestamp);}
 	data = cJSON_Print(root);
 	cJSON_Delete(root);
     httpd_resp_set_type(req, "application/json");

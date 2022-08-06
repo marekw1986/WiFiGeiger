@@ -108,6 +108,7 @@ char* constructSettingsJSON(void) {
 	cJSON_AddStringToObject(root, "ntp2", config.ntp2);
 	cJSON_AddStringToObject(root, "ntp3", config.ntp3);
 	cJSON_AddStringToObject(root, "mqtt_server", config.mqtt_server);
+	cJSON_AddStringToObject(root, "mqtt_username", config.mqtt_username);
 	cJSON_AddNumberToObject(root, "mqtt_port", config.mqtt_port);
 	cJSON_AddStringToObject(root, "mqtt_topic", config.mqtt_topic);
 	cJSON_AddNumberToObject(root, "timezone", config.timezone);

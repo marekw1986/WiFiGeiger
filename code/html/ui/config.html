@@ -61,6 +61,8 @@ function test() {
 	var timezone = document.getElementById('timezone');	
 	var daylight = document.getElementById('daylight');	
     var mqtt = document.getElementById('mqtt_server');
+    var mqtt_username = document.getElementById('mqtt_username');
+    var mqtt_password = document.getElementById('mqtt_password');
     var mqtt_port = document.getElementById('mqtt_port');
     var topic = document.getElementById('mqtt_topic');
 	var token = document.getElementById('token');
@@ -192,7 +194,17 @@ function test() {
 				mqtt_port.focus();
 				result.style.display = 'block';
 				result.innerHTML = "Błąd parsowania nowego portu MQTT.";					
-			}																	
+			}
+			else if (http_request.responseText === "invalid_mqttusername") {
+				mqtt_username.focus();
+				result.style.display = 'block';
+				result.innerHTML = "Błąd parsowania nowej nazwy użytkownika MQTT.";					
+			}
+			else if (http_request.responseText === "invalid_mqttpassword") {
+				mqtt_password.focus();
+				result.style.display = 'block';
+				result.innerHTML = "Błąd parsowania nowego hasła MQTT.";					
+			}																								
 			else if (http_request.responseText === "invalid_topic") {
 				dlsStatus.focus();
 				result.style.display = 'block';
@@ -211,7 +223,7 @@ function test() {
 	};
 	http_request.open("POST", "/ui/config.cgi", true);
 	http_request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-	var request = "token=" + token.value + "&devname=" + devname.value + "&dhcp=" + dhcp + "&ip=" + ip.value + "&netmask=" + netmask.value + "&gw=" + gw.value + "&dns1=" + dns1.value + "&dns2=" + dns2.value + "&ntp1=" + ntp1.value + "&ntp2=" + ntp2.value + "&ntp3=" + ntp3.value + "&timezone=" + timezone.value + "&dls=" + dls + "&mqtt=" + mqtt.value + "&mqtt_port=" + mqtt_port.value + "&topic=" + topic.value;
+	var request = "token=" + token.value + "&devname=" + devname.value + "&dhcp=" + dhcp + "&ip=" + ip.value + "&netmask=" + netmask.value + "&gw=" + gw.value + "&dns1=" + dns1.value + "&dns2=" + dns2.value + "&ntp1=" + ntp1.value + "&ntp2=" + ntp2.value + "&ntp3=" + ntp3.value + "&timezone=" + timezone.value + "&dls=" + dls + "&mqtt=" + mqtt.value + "&mqtt_port=" + mqtt_port.value + "&mqtt_username=" +mqtt_username.value + "&mqtt_password=" + mqtt_password.value + "&topic=" + topic.value;
 	http_request.send(request);
 	return true;	
 }
@@ -231,6 +243,7 @@ function getConfig() {
 		var ntp3 = document.getElementById('ntp3');
 		var mqtt_server = document.getElementById('mqtt_server');
 		var mqtt_port = document.getElementById('mqtt_port');
+		var mqtt_username = document.getElementById('mqtt_username');
 		var mqtt_topic = document.getElementById('mqtt_topic');
 		var timezone = document.getElementById('timezone');
 		var daylight = document.getElementById('daylight');
@@ -253,6 +266,7 @@ function getConfig() {
 		ntp3.value = data.ntp3;
 		mqtt_server.value = data.mqtt_server;
 		mqtt_port.value = data.mqtt_port;
+		mqtt_username.value = data.mqtt_username;
 		mqtt_topic.value = data.mqtt_topic;
 		timezone.value = data.timezone;
 		daylight.checked = data.daylight;
@@ -294,7 +308,9 @@ function init()
 <label>Serwer NTP #3:</label><input type="text" name="ntp3" id="ntp3" value="" maxlength="60"><br><br>
 
 <label>Serwer MQTT:</label><input type="text" name="mqtt_server" id="mqtt_server" value="" maxlength="60"> (pozostaw puste by wyłaczyć logowanie MQTT)<br>
-<label>Port MQTT:</label><input type="text" name="mqtt_port" id="mqtt_port" value="" maxlength="60"><br>
+<label>Login MQTT:</label><input type="text" name="mqtt_username" id="mqtt_username" value="" maxlength="60"> (pozostaw puste jeśli nie używasz autoryzacji)<br>
+<label>Hasło MQTT:</label><input type="password" name="mqtt_password" id="mqtt_password" value="" maxlength="60"><br>
+<label>Port MQTT:</label><input type="number" name="mqtt_port" id="mqtt_port" value="" maxlength="5"><br>
 <label>Temat MQTT:</label><input type="text" name="mqtt_topic" id="mqtt_topic" value="" maxlength="60"><br>
 
 <input type="hidden" name="curtz" id="curtz" value="">

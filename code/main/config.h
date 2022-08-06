@@ -23,6 +23,8 @@ typedef struct {
 	char mqtt_server[64];
 	uint32_t mqtt_port;
 	char mqtt_topic[64];
+	char mqtt_username[64];
+	char mqtt_password[64];
 	char password[34];
 	int8_t timezone;
 	uint8_t daylight; 

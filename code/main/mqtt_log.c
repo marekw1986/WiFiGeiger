@@ -180,7 +180,12 @@ static void connect_handler(void* arg, esp_event_base_t event_base, int32_t even
 	if (config_get_current(&config) == ESP_FAIL) return;
 	if (strlen(config.mqtt_server) == 0) return;	//Ignore MQTT if server address was left empty
 	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &client));
-    snprintf(mqtt_uri, sizeof(mqtt_uri)-1, "mqtt://%s:%d", config.mqtt_server, config.mqtt_port);
+    if (strlen(config.mqtt_username) == 0) {
+		snprintf(mqtt_uri, sizeof(mqtt_uri)-1, "mqtt://%s:%d", config.mqtt_server, config.mqtt_port);
+	}
+	else {
+		snprintf(mqtt_uri, sizeof(mqtt_uri)-1, "mqtt://%s:%s@%s:%d", config.mqtt_username, config.mqtt_password, config.mqtt_server, config.mqtt_port);
+	}
     esp_mqtt_client_set_uri(client, mqtt_uri);
 	esp_mqtt_client_start(client);
 }

@@ -40,7 +40,7 @@ esp_mqtt_client_config_t mqtt_cfg = {
 esp_mqtt_client_handle_t client;
 os_timer_t mqtt_timer;
 static uint8_t mqtt_connected = 0;
-static time_t mqtt_last_log_timestamp = 0;
+static time_t mqtt_last_log_time = 0;
 
 void mqtt_timer_func (void* arg);
 static void connect_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
@@ -79,7 +79,7 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             break;
         case MQTT_EVENT_PUBLISHED:
             ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
-            time(&mqtt_last_log_timestamp);
+            mqtt_last_log_time = get_uptime();
             os_timer_disarm(&mqtt_timer);
             os_timer_setfn(&mqtt_timer, mqtt_timer_func, NULL);
             os_timer_arm(&mqtt_timer, 30000, 0);
@@ -147,8 +147,8 @@ void mqtt_client_stop(void) {
 	esp_mqtt_client_stop(client);
 }
 
-time_t mqtt_get_last_log_timestamp(void) {
-    return mqtt_last_log_timestamp;
+time_t mqtt_get_last_log_time(void) {
+    return mqtt_last_log_time;
 }
 
 uint8_t mqtt_get_connection_status(void) {

@@ -73,7 +73,7 @@ function update() {
 		free_heap.value = data.free_heap;
 		min_free_heap.value = data.min_free_heap;
         mqtt_status.value = data.mqtt_connected ? "Połączono" : "Rozłączono";
-		mqtt_time.value = data.mqtt_time + " sek. temu";
+		mqtt_time.value = data.mqtt_time;
 	}, function(xhr) { console.error(xhr); })
 }
 

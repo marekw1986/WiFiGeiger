@@ -128,6 +128,7 @@ function test() {
                 result.innerHTML = "Nieprawidłowy token operacji. Spróbuj ponownie załadować stronę.";
             }
 			else if (http_request.responseText === "invalid_devname") {
+				devname.focus()
 				result.style.display = 'block';
 				result.innerHTML = "Błąd parsowania nowej nazwy urządzenia.";
 			}            
@@ -206,7 +207,7 @@ function test() {
 				result.innerHTML = "Błąd parsowania nowego hasła MQTT.";					
 			}																								
 			else if (http_request.responseText === "invalid_topic") {
-				dlsStatus.focus();
+				topic.focus();
 				result.style.display = 'block';
 				result.innerHTML = "Błąd parsowania nowego tematu MQTT.";					
 			}													

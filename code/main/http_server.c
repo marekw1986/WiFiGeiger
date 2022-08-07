@@ -195,11 +195,11 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
                 else {
 					//parse devname here
 					if (httpd_query_key_value(buf, "devname", param, sizeof(param)) == ESP_OK) {
-						if (strlen(param) <= 32) {
+						if ( (strlen(param) > 0) && (strlen(param) <= 32) && !contain_space(param) ) {
 							strncpy(newConfig.devname, param, sizeof(newConfig.devname)-1);
 						} 
 						else {
-							httpd_resp_send(req, INVALID_IP_STR, strlen(INVALID_DEVNAME_STR));
+							httpd_resp_send(req, INVALID_DEVNAME_STR, strlen(INVALID_DEVNAME_STR));
 							free(buf);
 							return ESP_OK;
 						}
@@ -261,7 +261,7 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
                     }                    
                     //parse ntp1 here
                     if (httpd_query_key_value(buf, "ntp1", param, sizeof(param)) == ESP_OK) {
-                        if ( param[0] && (strlen(param) <= (sizeof(newConfig.ntp1)-1)) ) {
+                        if ( param[0] && (strlen(param) <= (sizeof(newConfig.ntp1)-1)) && !contain_space(param) ) {
                             strncpy(newConfig.ntp1, param, sizeof(newConfig.ntp1)-1);
                         }
                         else {
@@ -272,7 +272,7 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
                     }                    
                     //parse ntp2 here
                     if (httpd_query_key_value(buf, "ntp2", param, sizeof(param)) == ESP_OK) {
-                        if ( param[0] && (strlen(param) <= (sizeof(newConfig.ntp2)-1)) ) {
+                        if ( param[0] && (strlen(param) <= (sizeof(newConfig.ntp2)-1)) && !contain_space(param) ) {
                             strncpy(newConfig.ntp2, param, sizeof(newConfig.ntp2)-1);
                         }
                         else {
@@ -283,7 +283,7 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
                     }                    
                     //parse ntp3 here
                     if (httpd_query_key_value(buf, "ntp3", param, sizeof(param)) == ESP_OK) {
-                        if ( param[0] && (strlen(param) <= (sizeof(newConfig.ntp3)-1)) ) {
+                        if ( param[0] && (strlen(param) <= (sizeof(newConfig.ntp3)-1)) && !contain_space(param) ) {
                             strncpy(newConfig.ntp3, param, sizeof(newConfig.ntp3)-1);
                         }
                         else {
@@ -324,7 +324,7 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
                     }
                     //parse mqtt here
                     if (httpd_query_key_value(buf, "mqtt", param, sizeof(param)) == ESP_OK) {
-                        if (strlen(param) < sizeof(newConfig.mqtt_server)) {strncpy(newConfig.mqtt_server, param, sizeof(newConfig.mqtt_server)-1);}
+                        if ( (strlen(param) < sizeof(newConfig.mqtt_server)) && !contain_space(param) ) {strncpy(newConfig.mqtt_server, param, sizeof(newConfig.mqtt_server)-1);}
                         else {
                             httpd_resp_send(req, INVALID_MQTT_STR, strlen(INVALID_MQTT_STR));
                             free(buf);
@@ -345,25 +345,25 @@ esp_err_t config_cgi_post_handler(httpd_req_t *req)
                     } 
                     //parse MQTT username here
                     if (httpd_query_key_value(buf, "mqtt_username", param, sizeof(param)) == ESP_OK) {
-                        if (strlen(param) < sizeof(newConfig.mqtt_username)) {strncpy(newConfig.mqtt_username, param, sizeof(newConfig.mqtt_username)-1);}
+                        if ( (strlen(param) < sizeof(newConfig.mqtt_username)) && !contain_space(param) ) {strncpy(newConfig.mqtt_username, param, sizeof(newConfig.mqtt_username)-1);}
                         else {
-                            httpd_resp_send(req, INVALID_TOPIC_STR, strlen(INVALID_MQTTUSERNAME_STR));
+                            httpd_resp_send(req, INVALID_MQTTUSERNAME_STR, strlen(INVALID_MQTTUSERNAME_STR));
                             free(buf);
                             return ESP_OK;                            
                         }                        
                     } 
                     //parse MQTT username here
                     if (httpd_query_key_value(buf, "mqtt_password", param, sizeof(param)) == ESP_OK) {
-                        if (strlen(param) < sizeof(newConfig.mqtt_password)) {strncpy(newConfig.mqtt_password, param, sizeof(newConfig.mqtt_password)-1);}
+                        if ( (strlen(param) < sizeof(newConfig.mqtt_password)) && !contain_space(param) ) {strncpy(newConfig.mqtt_password, param, sizeof(newConfig.mqtt_password)-1);}
                         else {
-                            httpd_resp_send(req, INVALID_TOPIC_STR, strlen(INVALID_MQTTPASSWORD_STR));
+                            httpd_resp_send(req, INVALID_MQTTPASSWORD_STR, strlen(INVALID_MQTTPASSWORD_STR));
                             free(buf);
                             return ESP_OK;                            
                         }                        
                     }                                                               
                     //parse topic here
                     if (httpd_query_key_value(buf, "topic", param, sizeof(param)) == ESP_OK) {
-                        if (strlen(param) < sizeof(newConfig.mqtt_topic)) {strncpy(newConfig.mqtt_topic, param, sizeof(newConfig.mqtt_topic)-1);}
+                        if ( (strlen(param) < sizeof(newConfig.mqtt_topic)) && !contain_space(param) ) {strncpy(newConfig.mqtt_topic, param, sizeof(newConfig.mqtt_topic)-1);}
                         else {
                             httpd_resp_send(req, INVALID_TOPIC_STR, strlen(INVALID_TOPIC_STR));
                             free(buf);

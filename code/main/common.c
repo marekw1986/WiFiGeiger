@@ -222,3 +222,11 @@ void sntp_sync_time_func(struct timeval *tv) {
 		ESP_LOGI(TAG, "I2C semaphore taken");
 	}
 }
+
+uint8_t contain_space(const char* str) {
+	while(*str) {
+		if (isspace(*str)) return 1;
+		str++;
+	}
+	return 0;
+}

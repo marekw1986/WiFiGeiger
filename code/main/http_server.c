@@ -667,10 +667,10 @@ httpd_uri_t data_json = {
 httpd_uri_t main_get = {
     .uri       = "/",
     .method    = HTTP_GET,
-    .handler   = data_json_get_handler,
+    .handler   = file_get_handler,
     /* Let's pass response string in user
      * context to demonstrate it's usage */
-     .user_ctx = NULL
+     .user_ctx = "/spiffs/ui/index.html"
 };
 
 httpd_uri_t settings_json = {

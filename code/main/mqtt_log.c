@@ -73,6 +73,7 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             break;
         case MQTT_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+            os_timer_disarm(&mqtt_timer);
             mqtt_connected = 0;
             break;
 
